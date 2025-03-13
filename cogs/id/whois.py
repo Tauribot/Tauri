@@ -39,12 +39,20 @@ class Whois(commands.Cog):
             badges.append(f"{self.badge_emojis.get('active_developer')} Active Developer")
             
         return badges
-
-    @commands.hybrid_command(
+    
+    @commands.hybrid_group(
         name="whois",
         description="Get information about a user"
     )
-    async def whois(self, ctx, user: typing.Optional[typing.Union[discord.Member, discord.User]]):
+    async def whois(self, ctx):
+        await ctx.reply("The `whois` command requires a subcommand. Use `/whois discord` to get information about a discord user.")
+        pass
+
+    @whois.command(
+        name="discord",
+        description="Get information about a user"
+    )
+    async def dc(self, ctx, user: typing.Optional[typing.Union[discord.Member, discord.User]]):
         if not user:
             user = ctx.author
             fetched = await self.bot.fetch_user(user.id)
