@@ -48,9 +48,6 @@ class Whois(commands.Cog):
         if not user:
             user = ctx.author
 
-        getuser = await self.bot.fetch_user(user.id)
-        bio = getuser.bio
-
         embed = discord.Embed(
             color=None,
             timestamp=ctx.message.created_at
@@ -71,10 +68,7 @@ class Whois(commands.Cog):
                 embed.add_field(name=f"Badges [{count}]", value="\n".join(badges), inline=False)
 
         # User information
-        if bio:
-            embed.add_field(name="User", value=f"{user.mention} `{user.id}`\n```{bio}```", inline=False)
-        else:
-            embed.add_field(name="User", value=f"{user.mention} `{user.id}`", inline=False)
+        embed.add_field(name="User", value=f"{user.mention} `{user.id}`", inline=False)
         embed.add_field(name="Created At", value=f"<t:{int(user.created_at.timestamp())}:F> [<t:{int(user.created_at.timestamp())}:R>]", inline=True)
         if hasattr(user, "joined_at") and user.joined_at:
             embed.add_field(name="Joined At", value=f"<t:{int(user.joined_at.timestamp())}:F> [<t:{int(user.joined_at.timestamp())}:R>]", inline=True)
