@@ -102,9 +102,13 @@ async def on_command_error(ctx, error):
             
             logembed.set_footer(text=f"Error ID: {event_id}")
             try:
-                errorlogs = bot.get_channel(1349454868955271290)
+                channelid = os.getenv("errors")
+                errorlogs = bot.get_channel(int(channelid))
+                
                 if errorlogs:
                     await errorlogs.send(embed=logembed)
+                else:
+                    print("Error logs channel not found")
             except Exception as e:
                 print(f"Failed to send error log: {e}")
             
@@ -130,9 +134,11 @@ async def secrets():
 
     token = client.secrets.get_secret_by_name(secret_name="token", project_id="1fc23486-c8b2-4135-a02a-a40be32b3d65", environment_slug=slug, secret_path="/")
     mongourl = client.secrets.get_secret_by_name(secret_name="mongourl", project_id="1fc23486-c8b2-4135-a02a-a40be32b3d65", environment_slug=slug, secret_path="/")
+    errors = client.secrets.get_secret_by_name(secret_name="errors", project_id="1fc23486-c8b2-4135-a02a-a40be32b3d65", environment_slug=slug, secret_path="/")
 
     os.environ["token"] = token.secretValue
     os.environ["mongourl"] = mongourl.secretValue
+    os.environ["errors"] = errors.secretValue
 
     if token.secretValue and mongourl.secretValue:
         return True
