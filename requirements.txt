@@ -1,0 +1,12 @@
+discord.py
+pymongo
+python-dotenv
+requests
+sentry-sdk
+urllib3
+decouple
+python-dotenv
+jishaku
+fastapi
+uvicorn
+infisicalsdk
