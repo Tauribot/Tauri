@@ -55,8 +55,8 @@ class Whois(commands.Cog):
     async def dc(self, ctx, user: typing.Optional[typing.Union[discord.Member, discord.User]]):
         if not user:
             user = ctx.author
-            fetched = await self.bot.fetch_user(user.id)
-
+        
+        fetched = await self.bot.fetch_user(user.id)
         accent_colour = fetched.accent_colour
 
         embed = discord.Embed(
