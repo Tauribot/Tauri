@@ -47,15 +47,18 @@ class Whois(commands.Cog):
     async def whois(self, ctx, user: typing.Optional[typing.Union[discord.Member, discord.User]]):
         if not user:
             user = ctx.author
+            fetched = await self.bot.fetch_user(user.id)
+
+        accent_colour = fetched.accent_colour
 
         embed = discord.Embed(
-            color=None,
+            color=accent_colour,
             timestamp=ctx.message.created_at
-            ) 
+        ) 
         # Layout the embed
         embed.set_author(name=f"@{user.name}", icon_url=user.avatar)
-        if user.banner:
-            embed.set_image(url=user.banner)
+        if fetched.banner:
+            embed.set_image(url=fetched.banner.url)
         embed.set_thumbnail(url=user.avatar)
 
         # Badges
@@ -69,10 +72,9 @@ class Whois(commands.Cog):
 
         # User information
         embed.add_field(name="User", value=f"{user.mention} `{user.id}`", inline=False)
-        embed.add_field(name="Created At", value=f"<t:{int(user.created_at.timestamp())}:F> [<t:{int(user.created_at.timestamp())}:R>]", inline=True)
+        embed.add_field(name="Created At", value=f"<t:{int(user.created_at.timestamp())}:F>\n[<t:{int(user.created_at.timestamp())}:R>]", inline=True)
         if hasattr(user, "joined_at") and user.joined_at:
-            embed.add_field(name="Joined At", value=f"<t:{int(user.joined_at.timestamp())}:F> [<t:{int(user.joined_at.timestamp())}:R>]", inline=True)
-
+            embed.add_field(name="Joined At", value=f"<t:{int(user.joined_at.timestamp())}:F>\n[<t:{int(user.joined_at.timestamp())}:R>]", inline=True)
         await ctx.send(embed=embed)
 
 
