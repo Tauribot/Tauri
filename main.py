@@ -13,8 +13,11 @@ import jishaku
 from infisical_sdk import InfisicalSDKClient
 
 load_dotenv()
+if os.getenv("environment") == "development":
+    bot = commands.Bot(command_prefix=commands.when_mentioned_or('>'), intents=discord.Intents.all())
+elif os.getenv("environment") == "production":
+    bot = commands.Bot(command_prefix=commands.when_mentioned_or('-'), intents=discord.Intents.all())
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or('>'), intents=discord.Intents.all())
 
 async def setup_database():
     """Initialize database connection"""

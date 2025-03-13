@@ -81,5 +81,15 @@ class DevCommands(commands.Cog):
         await ctx.send("Shutting down...")
         exit()
 
+    @commands.hybrid_command(
+        name="testerror",
+        description="Test error logging",
+    )
+    @commands.is_owner()
+    @app_commands.guilds(discord.Object(id=devguild))  # Dev Guild
+    async def testerror(self, ctx):
+        1 / 0 # Force a ZeroDivisionError
+        await ctx.send("Error not raised")
+
 async def setup(bot):
     await bot.add_cog(DevCommands(bot))
