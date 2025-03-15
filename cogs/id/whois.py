@@ -149,16 +149,16 @@ class Whois(commands.Cog):
         try:
             user = await client.get_user(roblox)
             if user:
-                embed = await handle_user(client, user)
+                output = await handle_user(client, user)
 
-                await ctx.send(embed=embed)
+                await ctx.send(embed=output[0], view=output[1])
         except UserNotFound:
             try:
                 user = await client.get_user_by_username(roblox)
                 if user:
-                    embed = await handle_user(client, user)
+                    output = await handle_user(client, user)
 
-                    await ctx.send(embed=embed)
+                    await ctx.send(embed=output[0], view=output[1])
             except UserNotFound:
                 await ctx.send("User not found")
         except Exception as e:
@@ -185,7 +185,10 @@ async def handle_user(client, user):
     else:
         embed.add_field(name="Description", value="No description", inline=False)
 
-    return embed
+    view = discord.ui.View()
+    view.add_item(discord.ui.Button(label="View Profile", url=f"https://www.roblox.com/users/{user.id}/profile"))
+
+    return [ embed, view ] 
 
 async def setup(bot):
     await bot.add_cog(Whois(bot))
