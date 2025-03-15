@@ -1,7 +1,10 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+from roblox import Client, AvatarThumbnailType
+from roblox.utilities.exceptions import UserNotFound
 import typing
+
 
 class Whois(commands.Cog):
     def __init__(self, bot):
@@ -22,7 +25,7 @@ class Whois(commands.Cog):
     async def get_user_badges(self, user: discord.User) -> list[str]:
         badges = []
         flags = user.public_flags
-        
+
         if user.id == 570499080187412480:
             badges.append(f"{self.badge_emojis.get('owner')} Bot Owner")
         if user.bot:
@@ -32,20 +35,25 @@ class Whois(commands.Cog):
         if flags.partner:
             badges.append(f"{self.badge_emojis.get('partner')} Partner")
         if flags.hypesquad:
-            badges.append(f"{self.badge_emojis.get('hypesquad')} HypeSquad Events")
+            badges.append(
+                f"{self.badge_emojis.get('hypesquad')} HypeSquad Events")
         if flags.bug_hunter:
             badges.append(f"{self.badge_emojis.get('bug_hunter')} Bug Hunter")
         if flags.hypesquad_bravery:
-            badges.append(f"{self.badge_emojis.get('hypesquad_bravery')} HypeSquad Bravery")
+            badges.append(
+                f"{self.badge_emojis.get('hypesquad_bravery')} HypeSquad Bravery")
         if flags.hypesquad_brilliance:
-            badges.append(f"{self.badge_emojis.get('hypesquad_brilliance')} HypeSquad Brilliance")
+            badges.append(
+                f"{self.badge_emojis.get('hypesquad_brilliance')} HypeSquad Brilliance")
         if flags.hypesquad_balance:
-            badges.append(f"{self.badge_emojis.get('hypesquad_balance')} HypeSquad Balance")
+            badges.append(
+                f"{self.badge_emojis.get('hypesquad_balance')} HypeSquad Balance")
         if flags.active_developer:
-            badges.append(f"{self.badge_emojis.get('active_developer')} Active Developer")
-            
+            badges.append(
+                f"{self.badge_emojis.get('active_developer')} Active Developer")
+
         return badges
-    
+
     @commands.hybrid_group(
         name="whois",
         description="Get information about a user"
@@ -62,14 +70,14 @@ class Whois(commands.Cog):
     async def dc(self, ctx, user: typing.Optional[typing.Union[discord.Member, discord.User]]):
         if not user:
             user = ctx.author
-                    
+
         fetched = await self.bot.fetch_user(user.id)
         accent_colour = fetched.accent_colour
 
         embed = discord.Embed(
             color=accent_colour,
             timestamp=ctx.message.created_at
-        ) 
+        )
         # Layout the embed
         embed.set_author(name=f"@{user.name}", icon_url=user.avatar)
         if fetched.banner:
@@ -81,27 +89,35 @@ class Whois(commands.Cog):
         if badges:
             count = len(badges)
             if count == 0:
-                embed.add_field(name=f"Badges [{count}]", value="No badges", inline=False)
+                embed.add_field(
+                    name=f"Badges [{count}]", value="No badges", inline=False)
             else:
-                embed.add_field(name=f"Badges [{count}]", value="\n".join(badges), inline=False)
+                embed.add_field(
+                    name=f"Badges [{count}]", value="\n".join(badges), inline=False)
 
         # User information
-        embed.add_field(name="User", value=f"{user.mention} `{user.id}`", inline=False)
-        embed.add_field(name="Created At", value=f"<t:{int(user.created_at.timestamp())}:F>\n[<t:{int(user.created_at.timestamp())}:R>]", inline=True)
+        embed.add_field(
+            name="User", value=f"{user.mention} `{user.id}`", inline=False)
+        embed.add_field(
+            name="Created At", value=f"<t:{int(user.created_at.timestamp())}:F>\n[<t:{int(user.created_at.timestamp())}:R>]", inline=True)
         if hasattr(user, "joined_at") and user.joined_at:
-            embed.add_field(name="Joined At", value=f"<t:{int(user.joined_at.timestamp())}:F>\n[<t:{int(user.joined_at.timestamp())}:R>]", inline=True)
+            embed.add_field(
+                name="Joined At", value=f"<t:{int(user.joined_at.timestamp())}:F>\n[<t:{int(user.joined_at.timestamp())}:R>]", inline=True)
 
         # Roles
         if isinstance(user, discord.Member):
-            roles = [role.mention for role in user.roles if role != ctx.guild.default_role]
+            roles = [role.mention for role in user.roles if role !=
+                     ctx.guild.default_role]
             if roles:
                 count = len(roles)
                 if count == 0:
-                    embed.add_field(name=f"Roles [{count}]", value="No roles", inline=False)
+                    embed.add_field(
+                        name=f"Roles [{count}]", value="No roles", inline=False)
                 else:
-                    embed.add_field(name=f"Roles [{count}]", value=" ".join(roles), inline=False)
+                    embed.add_field(
+                        name=f"Roles [{count}]", value=" ".join(roles), inline=False)
 
-        # Permissions 
+        # Permissions
         if isinstance(user, discord.Member):
             permissions = user.guild_permissions
             dangerous_permissions = [
@@ -114,14 +130,62 @@ class Whois(commands.Cog):
                 "manage_roles",
                 "manage_webhooks",
             ]
-            prettify = lambda x: x.replace("_", " ").title()
-            prettydangerous = [prettify(perm) for perm in dangerous_permissions if getattr(permissions, perm)]
+            def prettify(x): return x.replace("_", " ").title()
+            prettydangerous = [
+                prettify(perm) for perm in dangerous_permissions if getattr(permissions, perm)]
 
             if prettydangerous:
-                embed.add_field(name="Permissions", value=", ".join(prettydangerous), inline=False)
-            
+                embed.add_field(name="Permissions", value=", ".join(
+                    prettydangerous), inline=False)
+
         await ctx.send(embed=embed)
 
+    @whois.command(
+        name="roblox",
+        description="Get information about a Roblox user"
+    )
+    async def roblox(self, ctx, roblox: str):
+        client = Client()
+        try:
+            user = await client.get_user(roblox)
+            if user:
+                embed = await handle_user(client, user)
+
+                await ctx.send(embed=embed)
+        except UserNotFound:
+            try:
+                user = await client.get_user_by_username(roblox)
+                if user:
+                    embed = await handle_user(client, user)
+
+                    await ctx.send(embed=embed)
+            except UserNotFound:
+                await ctx.send("User not found")
+        except Exception as e:
+            await ctx.send(f"Failed to get user: {e}")
+
+
+async def handle_user(client, user):
+    thumbnail = await client.thumbnails.get_user_avatar_thumbnails(
+        users=[user],
+        type=AvatarThumbnailType.headshot,
+        size=(48, 48)
+    )
+    embed = discord.Embed(
+        title=user.display_name,
+        color=None
+    )
+
+    embed.set_thumbnail(url=thumbnail[0].image_url)
+    embed.add_field(name="Username", value=user.name, inline=True)
+    embed.add_field(name="ID", value=user.id, inline=True)
+    embed.add_field(name="Created At", value=f"<t:{int(user.created.timestamp())}:F>\n[<t:{int(user.created.timestamp())}:R>]", inline=True)
+    if user.description:
+        embed.add_field(name="Description", value=user.description, inline=False)
+    else:
+        embed.add_field(name="Description", value="No description", inline=False)
+
+    return embed
 
 async def setup(bot):
     await bot.add_cog(Whois(bot))
