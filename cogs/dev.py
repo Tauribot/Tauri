@@ -81,5 +81,15 @@ class DevCommands(commands.Cog):
         await ctx.send("Shutting down...")
         exit()
 
+    @commands.hybrid_command(
+        name='testerror',
+        description='Test error handling'
+    )
+    @commands.is_owner()
+    @app_commands.guilds(discord.Object(id=devguild))  # Dev Guild
+    async def testerror(self, ctx):
+        1/0
+        await ctx.send("This should never be reached")
+
 async def setup(bot):
     await bot.add_cog(DevCommands(bot))
