@@ -83,6 +83,36 @@ class Whois(commands.Cog):
         embed.add_field(name="Created At", value=f"<t:{int(user.created_at.timestamp())}:F>\n[<t:{int(user.created_at.timestamp())}:R>]", inline=True)
         if hasattr(user, "joined_at") and user.joined_at:
             embed.add_field(name="Joined At", value=f"<t:{int(user.joined_at.timestamp())}:F>\n[<t:{int(user.joined_at.timestamp())}:R>]", inline=True)
+
+        # Roles
+        if isinstance(user, discord.Member):
+            roles = [role.mention for role in user.roles if role != ctx.guild.default_role]
+            if roles:
+                count = len(roles)
+                if count == 0:
+                    embed.add_field(name=f"Roles [{count}]", value="No roles", inline=False)
+                else:
+                    embed.add_field(name=f"Roles [{count}]", value=" ".join(roles), inline=False)
+
+        # Permissions 
+        if isinstance(user, discord.Member):
+            permissions = user.guild_permissions
+            dangerous_permissions = [
+                "administrator",
+                "ban_members",
+                "kick_members",
+                "manage_guild",
+                "manage_channels",
+                "manage_messages",
+                "manage_roles",
+                "manage_webhooks",
+            ]
+            prettify = lambda x: x.replace("_", " ").title()
+            prettydangerous = [prettify(perm) for perm in dangerous_permissions if getattr(permissions, perm)]
+
+            if prettydangerous:
+                embed.add_field(name="Permissions", value=", ".join(prettydangerous), inline=False)
+            
         await ctx.send(embed=embed)
 
 

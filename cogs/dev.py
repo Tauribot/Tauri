@@ -53,7 +53,7 @@ class DevCommands(commands.Cog):
     @app_commands.guilds(discord.Object(id=devguild))  # Dev Guild
     async def sync(self, ctx):
         try:
-            synced = await self.bot.tree.sync(guild=ctx.guild)
+            synced = await self.bot.tree.sync()
             await ctx.send(f"Synced {len(synced)} command(s)")
         except Exception as e:
             await ctx.send(f"Failed to sync commands: {e}")
