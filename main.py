@@ -115,9 +115,10 @@ async def on_command_error(ctx, error):
             await ctx.send(embed=embed)
             
 async def secrets():
-    client = InfisicalSDKClient(host="https://app.infisical.com")
+    client = InfisicalSDKClient(host="https://secrets.jadyn.au")
 
     slug = None
+    pid = "13bd09c9-e403-4432-b3d3-728e31b2d316"
 
     if os.getenv("environment") == "development":
         slug = "dev"
@@ -132,9 +133,9 @@ async def secrets():
         client_secret=os.getenv("vaultsecret")
     )
 
-    token = client.secrets.get_secret_by_name(secret_name="token", project_id="1fc23486-c8b2-4135-a02a-a40be32b3d65", environment_slug=slug, secret_path="/")
-    mongourl = client.secrets.get_secret_by_name(secret_name="mongourl", project_id="1fc23486-c8b2-4135-a02a-a40be32b3d65", environment_slug=slug, secret_path="/")
-    errors = client.secrets.get_secret_by_name(secret_name="errors", project_id="1fc23486-c8b2-4135-a02a-a40be32b3d65", environment_slug=slug, secret_path="/")
+    token = client.secrets.get_secret_by_name(secret_name="token", project_id=pid, environment_slug=slug, secret_path="/")
+    mongourl = client.secrets.get_secret_by_name(secret_name="mongourl", project_id=pid, environment_slug=slug, secret_path="/")
+    errors = client.secrets.get_secret_by_name(secret_name="errors", project_id=pid, environment_slug=slug, secret_path="/")
 
     os.environ["token"] = token.secretValue
     os.environ["mongourl"] = mongourl.secretValue

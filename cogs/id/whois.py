@@ -8,6 +8,7 @@ class Whois(commands.Cog):
         self.bot = bot
         self.badge_emojis = {
             'owner': '<:owner:1349764046815236231>',
+            'bot': '<:bot:1349764057191682048> ',
             'staff': '<:staff:1349764059246891159>',
             'partner': '<:partner:1349764050946359338>',
             'hypesquad': '<:hypesquad:1349764041735667762>',
@@ -24,6 +25,8 @@ class Whois(commands.Cog):
         
         if user.id == 570499080187412480:
             badges.append(f"{self.badge_emojis.get('owner')} Bot Owner")
+        if user.bot:
+            badges.append(f"{self.badge_emojis.get('bot')} Bot")
         if flags.staff:
             badges.append(f"{self.badge_emojis.get('staff')} Discord Staff")
         if flags.partner:
