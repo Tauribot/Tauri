@@ -50,9 +50,9 @@ class Whois(commands.Cog):
         name="whois",
         description="Get information about a user"
     )
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def whois(self, ctx):
-        msg = await ctx.reply("The `whois` command requires a subcommand. Use `/whois discord` to get information about a discord user.")
-        await msg.delete(delay=5)  # Delete the message after 10 seconds
         pass
 
     @whois.command(
