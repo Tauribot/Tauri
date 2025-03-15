@@ -7,6 +7,7 @@ class Whois(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.badge_emojis = {
+            'owner': '<:owner:1349764046815236231>',
             'staff': '<:staff:1349764059246891159>',
             'partner': '<:partner:1349764050946359338>',
             'hypesquad': '<:hypesquad:1349764041735667762>',
@@ -21,6 +22,8 @@ class Whois(commands.Cog):
         badges = []
         flags = user.public_flags
         
+        if self.bot.is_owner(user):
+            badges.append(f"{self.badge_emojis.get('owner')} Cognition Owner")
         if flags.staff:
             badges.append(f"{self.badge_emojis.get('staff')} Discord Staff")
         if flags.partner:
