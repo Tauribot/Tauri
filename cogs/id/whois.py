@@ -18,12 +18,12 @@ class Whois(commands.Cog):
             'active_developer': '<:activedev:1349765304087085077>',
         }
 
-    def get_user_badges(self, user: discord.User) -> list[str]:
+    async def get_user_badges(self, user: discord.User) -> list[str]:
         badges = []
         flags = user.public_flags
         
-        if self.bot.is_owner(user):
-            badges.append(f"{self.badge_emojis.get('owner')} Cognition Owner")
+        if user.id == 570499080187412480:
+            badges.append(f"{self.badge_emojis.get('owner')} Bot Owner")
         if flags.staff:
             badges.append(f"{self.badge_emojis.get('staff')} Discord Staff")
         if flags.partner:
@@ -48,7 +48,8 @@ class Whois(commands.Cog):
         description="Get information about a user"
     )
     async def whois(self, ctx):
-        await ctx.reply("The `whois` command requires a subcommand. Use `/whois discord` to get information about a discord user.")
+        msg = await ctx.reply("The `whois` command requires a subcommand. Use `/whois discord` to get information about a discord user.")
+        await msg.delete(delay=5)  # Delete the message after 10 seconds
         pass
 
     @whois.command(
@@ -73,7 +74,7 @@ class Whois(commands.Cog):
         embed.set_thumbnail(url=user.avatar)
 
         # Badges
-        badges = self.get_user_badges(user)
+        badges = await self.get_user_badges(user)
         if badges:
             count = len(badges)
             if count == 0:
