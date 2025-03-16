@@ -78,6 +78,14 @@ class aichannel(commands.Cog):
         if message.channel.id == channelid:
             async with message.channel.typing():
                 try:
+                    self.bot.db.ai_prompts.insert_one({
+                        "username": message.author.name,
+                        "userid": message.author.id,
+                        "prompt": message.content,
+                        "guild": message.guild.id if message.guild else None,
+                        "channel": message.channel.id
+                    })
+                    
                     channel = self.bot.get_channel(channelid)
                     if not channel:
                         return
