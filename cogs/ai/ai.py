@@ -13,10 +13,9 @@ class aichannel(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.openai = os.getenv("openai")
-        self.deepseek = os.getenv("deepseek")
-        self.client = OpenAI(api_key=self.deepseek, base_url="https://api.deepseek.com")
-        self.model = "deepseek-chat"
-        if not self.deepseek or not self.openai:
+        self.client = OpenAI(api_key=self.openai)
+        self.model = "gpt-4o-mini-search-preview"
+        if not self.openai:
             print("OpenAI API key not found in environment variables!")
 
     @commands.hybrid_command(
