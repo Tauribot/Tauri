@@ -47,7 +47,7 @@ class aichannel(commands.Cog):
     @commands.is_owner()
     async def chat(self, ctx, *, message: str):
         """Chat with the AI."""
-        self.db.ai_prompts.insert_one({
+        self.bot.db.ai_prompts.insert_one({
             "username": ctx.author.name,
             "userid": ctx.author.id,
             "prompt": message,
