@@ -162,7 +162,7 @@ class Whois(commands.Cog):
             except UserNotFound:
                 await ctx.send("User not found")
         except Exception as e:
-            await ctx.send(f"Failed to get user: {e}")
+            print(e)
 
 
 async def handle_user(client, user):

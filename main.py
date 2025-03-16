@@ -37,6 +37,11 @@ async def on_ready():
 
 @bot.before_invoke
 async def before_invoke(ctx):
+    try:
+        await ctx.defer()
+    except (discord.errors.NotFound, discord.errors.ApplicationCommandInvokeError):
+        pass  # Ignore if command was already deferred or can't be deferred
+        
     bot.db.commands.insert_one({
         "username": ctx.author.name,
         "userid": ctx.author.id,

@@ -12,6 +12,59 @@ class logs(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
+    async def on_error(self, event, *args, **kwargs):
+        """Handle errors that occur in the error handler itself"""
+        error = args[0] if args else None
+        
+        with sentry_sdk.new_scope() as scope:
+            scope.level = "fatal"
+            scope.set_tag("error_handler", "True")
+            scope.set_extra("event", event)
+            event_id = sentry_sdk.capture_exception(error)
+            short_id = event_id[:8]
+            
+            embed = discord.Embed(
+                title="A critical error occurred",
+                description="A critical error occurred in the error handler. Please report this to the developers.",
+                color=discord.Color.dark_red()
+            )
+            if os.getenv("environment") == "development":
+                embed.add_field(name="Error", value=f"```{error}```")
+            embed.set_footer(text=f"Error ID: {short_id}")
+            
+            try:
+                self.bot.db.errors.insert_one({
+                    "event": event,
+                    "error_handler": True,
+                    "short_id": short_id,
+                    "event_id": event_id,
+                    "error": str(error),
+                    "timestamp": discord.utils.utcnow().isoformat()
+                })
+            except Exception as e:
+                print(f"Failed to log error to database: {e}")
+            
+            logembed = discord.Embed(
+                title="Critical Error Handler Failure",
+                description=f"Event: {event}\nError Handler: True\nShort ID: {short_id}",
+                color=discord.Color.dark_red()
+            )
+            
+            logembed.add_field(name="Error", value=f"```py\n{error}\n```")
+            logembed.set_footer(text=f"Error ID: {event_id}")
+            
+            try:
+                channelid = os.getenv("errors")
+                errorlogs = self.bot.get_channel(int(channelid))
+                
+                if errorlogs:
+                    await errorlogs.send(embed=logembed)
+                else:
+                    print("Error logs channel not found")
+            except Exception as e:
+                print(f"Failed to send error log: {e}")
+
+    @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(f"Missing required argument: {error.param.name}")
