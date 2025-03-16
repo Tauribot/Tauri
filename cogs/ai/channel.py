@@ -47,6 +47,8 @@ class aichannel(commands.Cog):
         search = self.bot.db.ai_channels.find_one({"_id": message.channel.id})
         if search:
             channelid = search["_id"]
+        else:
+            return
 
         if message.channel.id == channelid:
             
