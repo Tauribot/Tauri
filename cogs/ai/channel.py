@@ -5,6 +5,7 @@ import os
 import logging
 import time
 import asyncio
+import typing
 
 class aichannel(commands.Cog):
     def __init__(self, bot):
@@ -17,16 +18,41 @@ class aichannel(commands.Cog):
         if not self.apikey:
             self.logger.error("OpenAI API key not found in environment variables!")
 
+    @commands.hybrid_command(
+        name="ai",
+        aliases=["chat"],
+    )
+    @commands.is_owner()
+    async def chat(self, ctx, channel: typing.Union[discord.TextChannel, discord.VoiceChannel], *, message: str):
+        """Chat with the AI in a specific channel."""
+        if not isinstance(channel, discord.TextChannel):
+            return await ctx.send("You can only enable AI in a text channel.")
+        search = self.bot.db.ai_channels.find_one({"_id": channel.id})
+        if search:
+            self.bot.db.ai_channels.delete_one({"_id": channel.id})
+            await ctx.send(f"AI disabled in {channel.mention}.")
+        else:
+            self.bot.db.ai_channels.upsert(
+                {"_id": channel.id, "guild": ctx.guild.id }
+            )
+            await ctx.send(f"AI enabled in {channel.mention}.")
+        
+        
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
             return
         
-        if message.channel.id == 1350667412130762812:
+        search = self.bot.db.ai_channels.find_one({"_id": message.channel.id})
+        if search:
+            channelid = search["_id"]
+
+        if message.channel.id == channelid:
             
             async with message.channel.typing():  # Show typing indicator
                 try:
-                    channel = self.bot.get_channel(1350667412130762812)
+                    channel = self.bot.get_channel(channelid)
                     if not channel:
                         return
                     
