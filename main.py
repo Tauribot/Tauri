@@ -41,7 +41,7 @@ async def on_ready():
 async def before_invoke(ctx):
     try:
         await ctx.defer()
-    except (discord.errors.NotFound, discord.errors.ApplicationCommandInvokeError):
+    except (discord.errors.NotFound, discord.Forbidden, discord.HTTPException):
         pass  # Ignore if command was already deferred or can't be deferred
         
     bot.db.commands.insert_one({
