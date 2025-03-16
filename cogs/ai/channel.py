@@ -12,28 +12,28 @@ class aichannel(commands.Cog):
         self.bot = bot
         self.apikey = os.getenv("openai")
         self.client = OpenAI(api_key=self.apikey)  # Create client once
-        logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger(__name__)
-        self.logger.info("AI Channel cog initialized")
         if not self.apikey:
-            self.logger.error("OpenAI API key not found in environment variables!")
+            print("OpenAI API key not found in environment variables!")
 
     @commands.hybrid_command(
         name="ai",
         aliases=["chat"],
     )
     @commands.is_owner()
-    async def chat(self, ctx, channel: typing.Union[discord.TextChannel, discord.VoiceChannel], *, message: str):
+    async def chat(self, ctx, channel: typing.Union[discord.TextChannel, discord.VoiceChannel]):
         """Chat with the AI in a specific channel."""
         if not isinstance(channel, discord.TextChannel):
             return await ctx.send("You can only enable AI in a text channel.")
+        
         search = self.bot.db.ai_channels.find_one({"_id": channel.id})
         if search:
             self.bot.db.ai_channels.delete_one({"_id": channel.id})
             await ctx.send(f"AI disabled in {channel.mention}.")
         else:
-            self.bot.db.ai_channels.upsert(
-                {"_id": channel.id, "guild": ctx.guild.id }
+            self.bot.db.ai_channels.update_one(
+                {"_id": channel.id},
+                {"$set": {"guild": ctx.guild.id}},
+                upsert=True
             )
             await ctx.send(f"AI enabled in {channel.mention}.")
         
