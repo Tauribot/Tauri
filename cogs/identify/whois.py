@@ -4,53 +4,45 @@ from discord import app_commands
 from roblox import Client, AvatarThumbnailType
 from roblox.utilities.exceptions import UserNotFound
 import typing
+from handlers.emojis import getemojis
 
 
 class Whois(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.badge_emojis = {
-            'owner': '<:owner:1349764046815236231>',
-            'bot': '<:bot:1349764057191682048> ',
-            'staff': '<:staff:1349764059246891159>',
-            'partner': '<:partner:1349764050946359338>',
-            'hypesquad': '<:hypesquad:1349764041735667762>',
-            'bug_hunter': '<:bug1:1349764053081395342>',
-            'hypesquad_bravery': '<:bravery:1349764032684363818>',
-            'hypesquad_brilliance': '<:brillance:1349764035171586101>',
-            'hypesquad_balance': '<:balance:1349764048291631238>',
-            'active_developer': '<:activedev:1349765304087085077>',
-        }
+        self.badge_emojis = {}
 
     async def get_user_badges(self, user: discord.User) -> list[str]:
         badges = []
         flags = user.public_flags
+        
+        # Load emojis at the start of the method
+        self.badge_emojis = await getemojis()
 
         if user.id == 570499080187412480:
             badges.append(f"{self.badge_emojis.get('owner')} Bot Owner")
         if user.bot:
             badges.append(f"{self.badge_emojis.get('bot')} Bot")
+        if flags.system:
+            badges.append(f"{self.badge_emojis.get('system')} System")
         if flags.staff:
             badges.append(f"{self.badge_emojis.get('staff')} Discord Staff")
         if flags.partner:
             badges.append(f"{self.badge_emojis.get('partner')} Partner")
         if flags.hypesquad:
-            badges.append(
-                f"{self.badge_emojis.get('hypesquad')} HypeSquad Events")
+            badges.append(f"{self.badge_emojis.get('hypesquad')} HypeSquad Events")
         if flags.bug_hunter:
             badges.append(f"{self.badge_emojis.get('bug_hunter')} Bug Hunter")
+        if flags.bug_hunter_level_2:
+            badges.append(f"{self.badge_emojis.get('bug_hunterv2')} Bug Hunter Level 2")
         if flags.hypesquad_bravery:
-            badges.append(
-                f"{self.badge_emojis.get('hypesquad_bravery')} HypeSquad Bravery")
+            badges.append(f"{self.badge_emojis.get('hypesquad_bravery')} HypeSquad Bravery")
         if flags.hypesquad_brilliance:
-            badges.append(
-                f"{self.badge_emojis.get('hypesquad_brilliance')} HypeSquad Brilliance")
+            badges.append(f"{self.badge_emojis.get('hypesquad_brilliance')} HypeSquad Brilliance")
         if flags.hypesquad_balance:
-            badges.append(
-                f"{self.badge_emojis.get('hypesquad_balance')} HypeSquad Balance")
+            badges.append(f"{self.badge_emojis.get('hypesquad_balance')} HypeSquad Balance")
         if flags.active_developer:
-            badges.append(
-                f"{self.badge_emojis.get('active_developer')} Active Developer")
+            badges.append(f"{self.badge_emojis.get('active_developer')} Active Developer")
 
         return badges
 
