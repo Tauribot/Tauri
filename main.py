@@ -67,12 +67,14 @@ async def secrets():
     token = client.secrets.get_secret_by_name(secret_name="token", project_id=pid, environment_slug=slug, secret_path="/")
     mongourl = client.secrets.get_secret_by_name(secret_name="mongourl", project_id=pid, environment_slug=slug, secret_path="/")
     errors = client.secrets.get_secret_by_name(secret_name="errors", project_id=pid, environment_slug=slug, secret_path="/")
+    openai = client.secrets.get_secret_by_name(secret_name="openai", project_id=pid, environment_slug=slug, secret_path="/")
 
     os.environ["token"] = token.secretValue
     os.environ["mongourl"] = mongourl.secretValue
     os.environ["errors"] = errors.secretValue
+    os.environ["openai"] = openai.secretValue
 
-    if token.secretValue and mongourl.secretValue:
+    if token.secretValue and mongourl.secretValue and errors.secretValue and openai.secretValue:
         return True
     else:
         return False
