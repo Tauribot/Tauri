@@ -47,6 +47,13 @@ class aichannel(commands.Cog):
     @commands.is_owner()
     async def chat(self, ctx, *, message: str):
         """Chat with the AI."""
+        self.db.ai_prompts.insert_one({
+            "username": ctx.author.name,
+            "userid": ctx.author.id,
+            "prompt": message,
+            "guild": ctx.guild.id if ctx.guild else None,
+            "channel": ctx.channel.id
+        })
         async with ctx.typing():
             try:
                 response = await asyncio.to_thread(
@@ -85,7 +92,7 @@ class aichannel(commands.Cog):
                         "guild": message.guild.id if message.guild else None,
                         "channel": message.channel.id
                     })
-                    
+
                     channel = self.bot.get_channel(channelid)
                     if not channel:
                         return
