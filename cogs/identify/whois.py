@@ -93,6 +93,7 @@ class Whois(commands.Cog):
         # Roblox Collection
         rblx_client = bloxlink.Bloxlink(token=os.getenv("bloxlink"))
         robloxinfo = None
+        view = discord.ui.View()
         try:
             roblox_id = rblx_client.global_discord_to_roblox(int(user.id))
             if roblox_id:
@@ -106,6 +107,11 @@ class Whois(commands.Cog):
                             "link": f"[{roblox_user.name}](https://www.roblox.com/users/{roblox_user.id}/profile)",
                             "timestamp": f"<t:{int(roblox_user.created.timestamp())}:F>\n[<t:{int(roblox_user.created.timestamp())}:R>]"
                         }
+
+                    if roblox_user.display_name != user.name:
+                        view.add_item(discord.ui.Button(label=f"{roblox_user.display_name} (@{roblox_user.name})", url=f"https://www.roblox.com/users/{roblox_user.id}/profile"))
+                    else:
+                        view.add_item(discord.ui.Button(label=f"@{roblox_user.name}", url=f"https://www.roblox.com/users/{roblox_user.id}/profile"))
                 except (UserNotFound, ValueError):
                     pass
         except BloxlinkException:
@@ -158,7 +164,7 @@ class Whois(commands.Cog):
                 embed.add_field(name="Permissions", value=", ".join(
                     prettydangerous), inline=False)
 
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, view=view)
 
     @whois.command(
         name="roblox",
