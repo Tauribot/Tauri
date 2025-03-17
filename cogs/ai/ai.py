@@ -3,8 +3,7 @@ from discord.ext import commands
 import discord
 from discord import app_commands
 import os
-import logging
-import time
+
 import asyncio
 import typing
 

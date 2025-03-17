@@ -173,7 +173,7 @@ class Whois(commands.Cog):
     async def roblox(self, ctx, roblox: str):
         client = Client()
         try:
-            user = await client.get_user(roblox)
+            user = await client.get_user(int(roblox))
             if user:
                 output = await handle_user(client, user)
 

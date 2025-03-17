@@ -2,14 +2,11 @@ import discord
 import asyncio
 import pymongo
 from dotenv import load_dotenv
-from itertools import cycle
-from discord.ext import commands, tasks
+from discord.ext import commands
 import pymongo.database
 import sentry_sdk
-from sentry_sdk import push_scope, capture_exception
 from sentry_sdk.integrations.pymongo import PyMongoIntegration
 import os
-import jishaku
 from infisical_sdk import InfisicalSDKClient
 
 load_dotenv()
@@ -55,7 +52,6 @@ async def before_invoke(ctx):
 async def secrets():
     client = InfisicalSDKClient(host="https://secrets.jadyn.au")
 
-    slug = None
     pid = "13bd09c9-e403-4432-b3d3-728e31b2d316"
 
     if os.getenv("environment") == "production":
@@ -70,18 +66,18 @@ async def secrets():
 
     listall = client.secrets.list_secrets(project_id=pid, environment_slug=slug, secret_path="/")
 
-    secrets = []
+    preos = []
     completed = []
 
     for secret in listall.secrets:
-        secrets.append(secret.secretKey)
+        preos.append(secret.secretKey)
 
-    for secret in secrets:
+    for secret in preos:
         request = client.secrets.get_secret_by_name(secret_name=secret, project_id=pid, environment_slug=slug, secret_path="/")
         os.environ[secret] = request.secretValue
         completed.append(secret)
 
-    if len(completed) == len(secrets):
+    if len(completed) == len(preos):
         print(f"Secrets Available [{len(completed)}]: " + str(completed))
         return True
     else:
@@ -114,6 +110,8 @@ async def load():
                     except Exception as e:
                         print(f'Failed to load {filename[:-3]}: {str(e)}')
 
+
+# noinspection PyTypeChecker
 async def main():
     async with bot:
         sentry_sdk.init(

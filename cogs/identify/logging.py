@@ -1,18 +1,15 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
-import typing
+
 import os
 import sentry_sdk
-from sentry_sdk import push_scope, capture_exception
-from sentry_sdk.integrations.pymongo import PyMongoIntegration
 
 class logs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_error(self, event, *args, **kwargs):
+    async def on_error(self, event, *args):
         """Handle errors that occur in the error handler itself"""
         error = args[0] if args else None
         
@@ -44,21 +41,21 @@ class logs(commands.Cog):
             except Exception as e:
                 print(f"Failed to log error to database: {e}")
             
-            logembed = discord.Embed(
+            criticalerror = discord.Embed(
                 title="Critical Error Handler Failure",
                 description=f"Event: {event}\nError Handler: True\nShort ID: {short_id}",
                 color=discord.Color.dark_red()
             )
             
-            logembed.add_field(name="Error", value=f"```py\n{error}\n```")
-            logembed.set_footer(text=f"Error ID: {event_id}")
+            criticalerror.add_field(name="Error", value=f"```py\n{error}\n```")
+            criticalerror.set_footer(text=f"Error ID: {event_id}")
             
             try:
                 channelid = os.getenv("errors")
                 errorlogs = self.bot.get_channel(int(channelid))
                 
                 if errorlogs:
-                    await errorlogs.send(embed=logembed)
+                    await errorlogs.send(embed=criticalerror)
                 else:
                     print("Error logs channel not found")
             except Exception as e:
