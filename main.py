@@ -58,23 +58,15 @@ async def secrets():
     slug = None
     pid = "13bd09c9-e403-4432-b3d3-728e31b2d316"
 
-    if os.getenv("environment") == "development":
-        slug = "dev"
-    elif os.getenv("environment") == "production":
+    if os.getenv("environment") == "production":
         slug = "prod"
-
     else:
-        raise Exception("Invalid environment")
+        slug = "dev"
 
     client.auth.universal_auth.login(
         client_id=os.getenv("vaultid"), 
         client_secret=os.getenv("vaultsecret")
     )
-
-    # token = client.secrets.get_secret_by_name(secret_name="token", project_id=pid, environment_slug=slug, secret_path="/")
-    # mongourl = client.secrets.get_secret_by_name(secret_name="mongourl", project_id=pid, environment_slug=slug, secret_path="/")
-    # errors = client.secrets.get_secret_by_name(secret_name="errors", project_id=pid, environment_slug=slug, secret_path="/")
-    # openai = client.secrets.get_secret_by_name(secret_name="openai", project_id=pid, environment_slug=slug, secret_path="/")
 
     listall = client.secrets.list_secrets(project_id=pid, environment_slug=slug, secret_path="/")
 
