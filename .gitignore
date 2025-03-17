@@ -2,3 +2,4 @@ __pycache__
 .devcontainer
 .github
 .env
+.idea
