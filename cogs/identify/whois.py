@@ -108,7 +108,7 @@ class Whois(commands.Cog):
                             "timestamp": f"<t:{int(roblox_user.created.timestamp())}:F>\n[<t:{int(roblox_user.created.timestamp())}:R>]"
                         }
 
-                    if roblox_user.display_name != user.name:
+                    if roblox_user.display_name != roblox_user.name:
                         view.add_item(discord.ui.Button(label=f"{roblox_user.display_name} (@{roblox_user.name})", url=f"https://www.roblox.com/users/{roblox_user.id}/profile"))
                     else:
                         view.add_item(discord.ui.Button(label=f"@{roblox_user.name}", url=f"https://www.roblox.com/users/{roblox_user.id}/profile"))
