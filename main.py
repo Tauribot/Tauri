@@ -110,17 +110,13 @@ async def load():
                     except Exception as e:
                         print(f'Failed to load {filename[:-3]}: {str(e)}')
 
-
-# noinspection PyTypeChecker
 async def main():
     async with bot:
         sentry_sdk.init(
             dsn="https://20c9af3eab9646c5b6f2d1cb4598e5dd@o4508966144376832.ingest.us.sentry.io/4508966147522560",
             traces_sample_rate=1.0,
             integrations=[PyMongoIntegration()],
-            _experiments={
-                "profiles_sample_rate": 1.0,
-            },
+            profiles_sample_rate=1.0
         )
             
         try:
