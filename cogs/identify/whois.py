@@ -5,6 +5,9 @@ from roblox import Client, AvatarThumbnailType
 from roblox.utilities.exceptions import UserNotFound
 import typing
 from handlers.emojis import getemojis
+import bloxlink
+from bloxlink.exceptions import BloxlinkException
+import os
 
 
 class Whois(commands.Cog):
@@ -86,15 +89,40 @@ class Whois(commands.Cog):
             else:
                 embed.add_field(
                     name=f"Badges [{count}]", value="\n".join(badges), inline=False)
+        
+        # Roblox Collection
+        rblx_client = bloxlink.Bloxlink(token=os.getenv("bloxlink"))
+        robloxinfo = None
+        try:
+            roblox_id = rblx_client.global_discord_to_roblox(int(user.id))
+            if roblox_id:
+                client = Client()
+                try:
+                    roblox_user = await client.get_user(int(roblox_id))
+                    if roblox_user:
+                        robloxinfo = {
+                            "user": roblox_user.name,
+                            "id": roblox_user.id,
+                            "link": f"[{roblox_user.name}](https://www.roblox.com/users/{roblox_user.id}/profile)",
+                            "timestamp": f"<t:{int(roblox_user.created.timestamp())}:F>\n[<t:{int(roblox_user.created.timestamp())}:R>]"
+                        }
+                except (UserNotFound, ValueError):
+                    pass
+        except BloxlinkException:
+            pass
 
         # User information
         embed.add_field(
             name="User", value=f"{user.mention} `{user.id}`", inline=False)
+        if robloxinfo:
+            embed.add_field(
+                name="Roblox", value=f"{robloxinfo['link']} `{robloxinfo['id']}`\n{robloxinfo['timestamp']}", inline=False)
         embed.add_field(
             name="Created At", value=f"<t:{int(user.created_at.timestamp())}:F>\n[<t:{int(user.created_at.timestamp())}:R>]", inline=True)
         if hasattr(user, "joined_at") and user.joined_at:
             embed.add_field(
                 name="Joined At", value=f"<t:{int(user.joined_at.timestamp())}:F>\n[<t:{int(user.joined_at.timestamp())}:R>]", inline=True)
+
 
         # Roles
         if isinstance(user, discord.Member):
@@ -180,7 +208,7 @@ async def handle_user(client, user):
     view = discord.ui.View()
     view.add_item(discord.ui.Button(label="View Profile", url=f"https://www.roblox.com/users/{user.id}/profile"))
 
-    return [ embed, view ] 
+    return [ embed, view ]
 
 async def setup(bot):
     await bot.add_cog(Whois(bot))

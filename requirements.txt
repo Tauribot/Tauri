@@ -12,3 +12,4 @@ uvicorn
 infisicalsdk
 roblox
 openai
+bloxlink.py

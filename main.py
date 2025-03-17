@@ -71,17 +71,26 @@ async def secrets():
         client_secret=os.getenv("vaultsecret")
     )
 
-    token = client.secrets.get_secret_by_name(secret_name="token", project_id=pid, environment_slug=slug, secret_path="/")
-    mongourl = client.secrets.get_secret_by_name(secret_name="mongourl", project_id=pid, environment_slug=slug, secret_path="/")
-    errors = client.secrets.get_secret_by_name(secret_name="errors", project_id=pid, environment_slug=slug, secret_path="/")
-    openai = client.secrets.get_secret_by_name(secret_name="openai", project_id=pid, environment_slug=slug, secret_path="/")
+    # token = client.secrets.get_secret_by_name(secret_name="token", project_id=pid, environment_slug=slug, secret_path="/")
+    # mongourl = client.secrets.get_secret_by_name(secret_name="mongourl", project_id=pid, environment_slug=slug, secret_path="/")
+    # errors = client.secrets.get_secret_by_name(secret_name="errors", project_id=pid, environment_slug=slug, secret_path="/")
+    # openai = client.secrets.get_secret_by_name(secret_name="openai", project_id=pid, environment_slug=slug, secret_path="/")
 
-    os.environ["token"] = token.secretValue
-    os.environ["mongourl"] = mongourl.secretValue
-    os.environ["errors"] = errors.secretValue
-    os.environ["openai"] = openai.secretValue
+    listall = client.secrets.list_secrets(project_id=pid, environment_slug=slug, secret_path="/")
 
-    if token.secretValue and mongourl.secretValue and errors.secretValue and openai.secretValue:
+    secrets = []
+    completed = []
+
+    for secret in listall.secrets:
+        secrets.append(secret.secretKey)
+
+    for secret in secrets:
+        request = client.secrets.get_secret_by_name(secret_name=secret, project_id=pid, environment_slug=slug, secret_path="/")
+        os.environ[secret] = request.secretValue
+        completed.append(secret)
+
+    if len(completed) == len(secrets):
+        print(f"Secrets Available [{len(completed)}]: " + str(completed))
         return True
     else:
         return False
@@ -116,7 +125,7 @@ async def load():
 async def main():
     async with bot:
         sentry_sdk.init(
-            dsn="https://53a4e9de4624e66e7a499fb8f849d2db@o4508875710136320.ingest.us.sentry.io/4508875712233472",
+            dsn="https://20c9af3eab9646c5b6f2d1cb4598e5dd@o4508966144376832.ingest.us.sentry.io/4508966147522560",
             traces_sample_rate=1.0,
             integrations=[PyMongoIntegration()],
             _experiments={
