@@ -145,25 +145,26 @@ class Whois(commands.Cog):
 
         # Permissions
         if isinstance(user, discord.Member):
-            if user.guild_permissions:
-                permissions = user.guild_permissions
-                dangerous_permissions = [
-                    "administrator",
-                    "ban_members",
-                    "kick_members",
-                    "manage_guild",
-                    "manage_channels",
-                    "manage_messages",
-                    "manage_roles",
-                    "manage_webhooks",
-                ]
-                def prettify(x): return x.replace("_", " ").title()
-                prettydangerous = [
-                    prettify(perm) for perm in dangerous_permissions if getattr(permissions, perm)]
+            if user:
+                if user.guild_permissions:
+                    permissions = user.guild_permissions
+                    dangerous_permissions = [
+                        "administrator",
+                        "ban_members",
+                        "kick_members",
+                        "manage_guild",
+                        "manage_channels",
+                        "manage_messages",
+                        "manage_roles",
+                        "manage_webhooks",
+                    ]
+                    def prettify(x): return x.replace("_", " ").title()
+                    prettydangerous = [
+                        prettify(perm) for perm in dangerous_permissions if getattr(permissions, perm)]
 
-                if prettydangerous:
-                    embed.add_field(name="Permissions", value=", ".join(
-                        prettydangerous), inline=False)
+                    if prettydangerous:
+                        embed.add_field(name="Permissions", value=", ".join(
+                            prettydangerous), inline=False)
 
         await ctx.send(embed=embed, view=view)
 

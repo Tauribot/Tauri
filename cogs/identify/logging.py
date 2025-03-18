@@ -105,7 +105,7 @@ class logs(commands.Cog):
                 try:
                     self.bot.db.errors.insert_one({
                         "user": ctx.author.id,
-                        "command": ctx.command.name if ctx.command else "Unknown",
+                        "command": ctx.command.qualified_name if ctx.command else "Unknown",
                         "guild": ctx.guild.id if ctx.guild else None,
                         "channel": ctx.channel.id,
                         "short_id": short_id,
@@ -118,7 +118,7 @@ class logs(commands.Cog):
                 
                 logembed = discord.Embed(
                     title="New User Error",
-                    description=f"User: {ctx.author} ({ctx.author.id})\nCommand: {ctx.command.name if ctx.command else 'Unknown'}\nGuild: {ctx.guild.name if ctx.guild else 'DM'} ({ctx.guild.id if ctx.guild else 'N/A'})\nChannel: {ctx.channel.name} ({ctx.channel.id})\nShort ID: {short_id}",
+                    description=f"User: {ctx.author} ({ctx.author.id})\nCommand: {ctx.command.qualified_name if ctx.command else 'Unknown'}\nGuild: {ctx.guild.name if ctx.guild else 'DM'} ({ctx.guild.id if ctx.guild else 'N/A'})\nChannel: {ctx.channel.name} ({ctx.channel.id})\nShort ID: {short_id}",
                     color=discord.Color.red()
                 )
                 
