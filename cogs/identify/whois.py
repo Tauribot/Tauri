@@ -146,8 +146,11 @@ class Whois(commands.Cog):
         # Permissions
         if isinstance(user, discord.Member):
             if user:
-                if user.guild_permissions:
+                try:
                     permissions = user.guild_permissions
+                except AttributeError:
+                    pass
+                if permissions:
                     dangerous_permissions = [
                         "administrator",
                         "ban_members",
