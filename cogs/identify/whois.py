@@ -18,7 +18,7 @@ class Whois(commands.Cog):
     async def get_user_badges(self, user: discord.User) -> list[str]:
         badges = []
         flags = user.public_flags
-        
+
         # Load emojis at the start of the method
         self.badge_emojis = await getemojis()
 
@@ -89,7 +89,7 @@ class Whois(commands.Cog):
             else:
                 embed.add_field(
                     name=f"Badges [{count}]", value="\n".join(badges), inline=False)
-        
+
         # Roblox Collection
         rblx_client = bloxlink.Bloxlink(token=os.getenv("bloxlink"))
         robloxinfo = None
@@ -109,9 +109,11 @@ class Whois(commands.Cog):
                         }
 
                     if roblox_user.display_name != roblox_user.name:
-                        view.add_item(discord.ui.Button(label=f"{roblox_user.display_name} (@{roblox_user.name})", url=f"https://www.roblox.com/users/{roblox_user.id}/profile"))
+                        view.add_item(discord.ui.Button(label=f"{roblox_user.display_name} (@{roblox_user.name})",
+                                                        url=f"https://www.roblox.com/users/{roblox_user.id}/profile"))
                     else:
-                        view.add_item(discord.ui.Button(label=f"@{roblox_user.name}", url=f"https://www.roblox.com/users/{roblox_user.id}/profile"))
+                        view.add_item(discord.ui.Button(label=f"@{roblox_user.name}",
+                                                        url=f"https://www.roblox.com/users/{roblox_user.id}/profile"))
                 except (UserNotFound, ValueError):
                     pass
         except BloxlinkException:
@@ -122,13 +124,16 @@ class Whois(commands.Cog):
             name="User", value=f"{user.mention} `{user.id}`", inline=False)
         if robloxinfo:
             embed.add_field(
-                name="Roblox", value=f"{robloxinfo['link']} `{robloxinfo['id']}`\n{robloxinfo['timestamp']}", inline=False)
+                name="Roblox", value=f"{robloxinfo['link']} `{robloxinfo['id']}`\n{robloxinfo['timestamp']}",
+                inline=False)
         embed.add_field(
-            name="Created At", value=f"<t:{int(user.created_at.timestamp())}:F>\n[<t:{int(user.created_at.timestamp())}:R>]", inline=True)
+            name="Created At",
+            value=f"<t:{int(user.created_at.timestamp())}:F>\n[<t:{int(user.created_at.timestamp())}:R>]", inline=True)
         if hasattr(user, "joined_at") and user.joined_at:
             embed.add_field(
-                name="Joined At", value=f"<t:{int(user.joined_at.timestamp())}:F>\n[<t:{int(user.joined_at.timestamp())}:R>]", inline=True)
-
+                name="Joined At",
+                value=f"<t:{int(user.joined_at.timestamp())}:F>\n[<t:{int(user.joined_at.timestamp())}:R>]",
+                inline=True)
 
         # Roles
         if isinstance(user, discord.Member):
@@ -145,12 +150,9 @@ class Whois(commands.Cog):
 
         # Permissions
         if isinstance(user, discord.Member):
-            if user:
-                try:
+            try:
+                if user.guild_permissions:
                     permissions = user.guild_permissions
-                except AttributeError:
-                    pass
-                if permissions:
                     dangerous_permissions = [
                         "administrator",
                         "ban_members",
@@ -161,15 +163,19 @@ class Whois(commands.Cog):
                         "manage_roles",
                         "manage_webhooks",
                     ]
-                    def prettify(x): return x.replace("_", " ").title()
+
+                    def prettify(x):
+                        return x.replace("_", " ").title()
+
                     prettydangerous = [
                         prettify(perm) for perm in dangerous_permissions if getattr(permissions, perm)]
-
                     if prettydangerous:
-                        embed.add_field(name="Permissions", value=", ".join(
-                            prettydangerous), inline=False)
+                        embed.add_field(name="Permissions", value=", ".join(prettydangerous), inline=False)
+            except AttributeError:
+                pass
 
-        await ctx.send(embed=embed, view=view)
+            await ctx.send(embed=embed, view=view)
+
 
     @whois.command(
         name="roblox",
@@ -210,7 +216,9 @@ async def handle_user(client, user):
     embed.set_thumbnail(url=thumbnail[0].image_url)
     embed.add_field(name="Username", value=user.name, inline=True)
     embed.add_field(name="ID", value=user.id, inline=True)
-    embed.add_field(name="Created At", value=f"<t:{int(user.created.timestamp())}:F>\n[<t:{int(user.created.timestamp())}:R>]", inline=True)
+    embed.add_field(name="Created At",
+                    value=f"<t:{int(user.created.timestamp())}:F>\n[<t:{int(user.created.timestamp())}:R>]",
+                    inline=True)
     if user.description:
         embed.add_field(name="Description", value=user.description, inline=False)
     else:
@@ -219,7 +227,8 @@ async def handle_user(client, user):
     view = discord.ui.View()
     view.add_item(discord.ui.Button(label="View Profile", url=f"https://www.roblox.com/users/{user.id}/profile"))
 
-    return [ embed, view ]
+    return [embed, view]
+
 
 async def setup(bot):
     await bot.add_cog(Whois(bot))
