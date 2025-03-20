@@ -18,6 +18,7 @@ async def getemojis():
             'hypesquad_brilliance': '<:brilliance:1350916257612042351>',
             'hypesquad_balance': '<:balance:1350916394794876982>',
             'active_developer': '<:activedev:1350916219829620777>',
+            'roblox': '<:roblox:1351674923365437595>',
         }
     elif os.getenv("environment") == "production":
         emojislist = {
@@ -33,5 +34,6 @@ async def getemojis():
             'hypesquad_brilliance': '<:brilliance:1350915016731398154>',
             'hypesquad_balance': '<:balance:1350915208620675304>',
             'active_developer': '<:activedev:1350914986540662784>',
+            'roblox': '<:roblox:1351674629575544872>',
         }
     return emojislist

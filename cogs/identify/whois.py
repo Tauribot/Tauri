@@ -100,6 +100,8 @@ class Whois(commands.Cog):
                 client = Client()
                 try:
                     roblox_user = await client.get_user(int(roblox_id))
+                    emojis = await getemojis()
+                    robloxico = emojis.get("roblox")
                     if roblox_user:
                         robloxinfo = {
                             "user": roblox_user.name,
@@ -109,11 +111,9 @@ class Whois(commands.Cog):
                         }
 
                     if roblox_user.display_name != roblox_user.name:
-                        view.add_item(discord.ui.Button(label=f"{roblox_user.display_name} (@{roblox_user.name})",
-                                                        url=f"https://www.roblox.com/users/{roblox_user.id}/profile"))
+                        view.add_item(discord.ui.Button(label=f"{roblox_user.display_name} (@{roblox_user.name})", url=f"https://www.roblox.com/users/{roblox_user.id}/profile", emoji=robloxico))
                     else:
-                        view.add_item(discord.ui.Button(label=f"@{roblox_user.name}",
-                                                        url=f"https://www.roblox.com/users/{roblox_user.id}/profile"))
+                        view.add_item(discord.ui.Button(label=f"@{roblox_user.name}", url=f"https://www.roblox.com/users/{roblox_user.id}/profile", emoji=robloxico))
                 except (UserNotFound, ValueError):
                     pass
         except BloxlinkException:
@@ -174,7 +174,7 @@ class Whois(commands.Cog):
             except AttributeError:
                 pass
 
-            await ctx.send(embed=embed, view=view)
+        await ctx.send(embed=embed, view=view)
 
 
     @whois.command(
