@@ -50,15 +50,14 @@ class DevCommands(commands.Cog):
             await ctx.send(f"Failed to reload cog: {e}")
 
     @commands.hybrid_command(
-        name="shutdown",
-        description="Shutdown the bot",
-        aliases=["exit", "stop"],
+        name="testerror",
+        description="Raise an error for testing"
     )
     @commands.is_owner()
     @app_commands.guilds(discord.Object(id=devguild))  # Dev Guild
-    async def shutdown(self, ctx):
-        await ctx.send("Shutting down...")
-        exit()
+    async def testerror(self, ctx):
+        1/0
+        await ctx.send("Error raised")
 
 async def setup(bot):
     await bot.add_cog(DevCommands(bot))

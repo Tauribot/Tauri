@@ -8,6 +8,7 @@ from handlers.emojis import getemojis
 import bloxlink
 from bloxlink.exceptions import BloxlinkException
 import os
+import re
 
 
 class Whois(commands.Cog):
@@ -183,24 +184,38 @@ class Whois(commands.Cog):
     )
     async def roblox(self, ctx, roblox: str):
         client = Client()
-        try:
-            user = await client.get_user(int(roblox))
+        number_pattern = re.compile(r"^\d+$")
+        is_number = bool(number_pattern.match(roblox))
+        roblox_not_found = discord.Embed(
+            title="Not Found",
+            description="The user you provided was not found. Double check the username or ID and try again.",
+            color=None,
+        )
+        
+        if is_number is True:
+            try:
+                user = await client.get_user(int(roblox))
+            except (UserNotFound, ValueError):
+                user = None
             if user:
                 output = await handle_user(client, user)
 
                 await ctx.send(embed=output[0], view=output[1])
-        except UserNotFound:
+            elif user is None:
+                await ctx.send(embed=roblox_not_found, ephemeral=True)
+
+        elif is_number is False:
             try:
                 user = await client.get_user_by_username(roblox)
-                if user:
-                    output = await handle_user(client, user)
-
-                    await ctx.send(embed=output[0], view=output[1])
-            except UserNotFound:
-                await ctx.send("User not found")
-        except Exception as e:
-            print(e)
-
+            except (UserNotFound, ValueError):
+                user = None
+            if user:
+                output = await handle_user(client, user)
+                await ctx.send(embed=output[0], view=output[1])
+            elif user is None:
+                await ctx.send(embed=roblox_not_found, ephemeral=True)
+        else:
+            await ctx.send(embed=roblox_not_found, ephemeral=True)
 
 async def handle_user(client, user):
     thumbnail = await client.thumbnails.get_user_avatar_thumbnails(
@@ -209,20 +224,18 @@ async def handle_user(client, user):
         size=(48, 48)
     )
     embed = discord.Embed(
-        title=user.display_name,
         color=None
     )
 
-    embed.set_thumbnail(url=thumbnail[0].image_url)
-    embed.add_field(name="Username", value=user.name, inline=True)
-    embed.add_field(name="ID", value=user.id, inline=True)
-    embed.add_field(name="Created At",
-                    value=f"<t:{int(user.created.timestamp())}:F>\n[<t:{int(user.created.timestamp())}:R>]",
-                    inline=True)
-    if user.description:
-        embed.add_field(name="Description", value=user.description, inline=False)
+    if user.display_name != user.name:
+        embed.set_author(name=f"{user.display_name} (@{user.name})", icon_url=thumbnail[0].image_url)
     else:
-        embed.add_field(name="Description", value="No description", inline=False)
+        embed.set_author(name=f"@{user.name}", icon_url=thumbnail[0].image_url)
+
+    embed.set_thumbnail(url=thumbnail[0].image_url)
+    embed.add_field(name="Account", value=f"{user.name} `{user.id}`", inline=False)
+    embed.add_field(name="Created At", value=f"<t:{int(user.created.timestamp())}:F>\n[<t:{int(user.created.timestamp())}:R>]", inline=False)
+
 
     view = discord.ui.View()
     view.add_item(discord.ui.Button(label="View Profile", url=f"https://www.roblox.com/users/{user.id}/profile"))

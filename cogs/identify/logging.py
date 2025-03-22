@@ -63,22 +63,24 @@ class logs(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
+        embed = discord.Embed(title="Oops!", color=discord.Color.red())
+
         if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(f"Missing required argument: {error.param.name}")
+            embed.description = f"Missing required argument: `{error.param.name}`"
         elif isinstance(error, commands.CheckFailure):
-            await ctx.send("You do not have permission to use this command")
+            embed.description = "You do not have permission to use this command"
         elif isinstance(error, commands.CommandNotFound):
             return
         elif isinstance(error, commands.MissingPermissions):
-            await ctx.send("I don't have the required permissions to do that!")
+            embed.description = "I don't have the required permissions to do that!"
         elif isinstance(error, commands.BotMissingPermissions):
-            await ctx.send("I don't have the required permissions to do that!")
+            embed.description = "I don't have the required permissions to do that!"
         elif isinstance(error, commands.CommandOnCooldown):
-            await ctx.send(f"This command is on cooldown. Try again in {error.retry_after:.2f} seconds")
+            embed.description = f"This command is on cooldown. Try again in {error.retry_after:.2f} seconds"
         elif isinstance(error, commands.DisabledCommand):
-            await ctx.send("This command is currently disabled")
+            embed.description = "This command is currently disabled"
         elif isinstance(error, commands.NoPrivateMessage):
-            await ctx.send("This command can't be used in private messages")
+            embed.description = "This command can't be used in private messages"
         else:
             error = getattr(error, 'original', error)
             with sentry_sdk.new_scope() as scope:
@@ -92,16 +94,11 @@ class logs(commands.Cog):
                 scope.set_extra("channel_id", ctx.channel.id)
                 event_id = sentry_sdk.capture_exception(error)
                 short_id = event_id[:8]
-                
-                embed = discord.Embed(
-                    title="An error occurred",
-                    description="An error occurred while executing the command. Please try again later.",
-                    color=discord.Color.red()
-                )
+
+                embed.description = f"An error occurred while executing the command. Please try again later.\nError ID: `{short_id}`"
                 if os.getenv("environment") == "development":
                     embed.add_field(name="Error", value=f"```{error}```")
-                embed.set_footer(text=f"Error ID: {short_id}")
-                
+
                 try:
                     self.bot.db.errors.insert_one({
                         "user": ctx.author.id,
@@ -115,28 +112,30 @@ class logs(commands.Cog):
                     })
                 except Exception as e:
                     print(f"Failed to log error to database: {e}")
-                
+
                 logembed = discord.Embed(
-                    title="New User Error",
-                    description=f"User: {ctx.author} ({ctx.author.id})\nCommand: {ctx.command.qualified_name if ctx.command else 'Unknown'}\nGuild: {ctx.guild.name if ctx.guild else 'DM'} ({ctx.guild.id if ctx.guild else 'N/A'})\nChannel: {ctx.channel.name} ({ctx.channel.id})\nShort ID: {short_id}",
+                    title="Error Logging",
+                    description=f"* User: {ctx.author} ({ctx.author.id})\n"
+                                f"* Command: {ctx.command.qualified_name if ctx.command else 'Unknown'}\n"
+                                f"* Guild: {ctx.guild.id if ctx.guild else 'N/A'}\n"
+                                f"* Short ID: {short_id}\n"
+                                f"* Event ID: {event_id}\n",
                     color=discord.Color.red()
                 )
-                
                 logembed.add_field(name="Error", value=f"```{error}```")
-                
                 logembed.set_footer(text=f"Error ID: {event_id}")
+
                 try:
                     channelid = os.getenv("errors")
                     errorlogs = self.bot.get_channel(int(channelid))
-                    
                     if errorlogs:
                         await errorlogs.send(embed=logembed)
                     else:
                         print("Error logs channel not found")
                 except Exception as e:
                     print(f"Failed to send error log: {e}")
-                
-                await ctx.send(embed=embed)
+
+        await ctx.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(logs(bot))
