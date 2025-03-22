@@ -113,7 +113,14 @@ class aichannel(commands.Cog):
                 async with session.get(image_url) as resp:
                     if resp.status == 200:
                         # Create temp file with unique name
-                        temp_file = f"generations/cognition_imagine_{ctx.message.id}.png"
+                        if os.getenv("environment") == "production":
+                            temp_file = f"app/generations/cognition_imagine_{ctx.message.id}.png"
+                        elif os.getenv("environment") == "development":
+                            temp_file = f"generations/cognition_imagine_{ctx.message.id}.png"
+
+                        if temp_file is None:
+                            return await ctx.reply("Failed to create image.")
+
                         with open(temp_file, "wb") as f:
                             f.write(await resp.read())
 
