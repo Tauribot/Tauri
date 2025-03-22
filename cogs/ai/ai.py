@@ -76,7 +76,7 @@ class aichannel(commands.Cog):
             ],
         )
 
-        await ctx.followup.send(response.choices[0].message.content)
+        await ctx.reply(response.choices[0].message.content)
 
     @ai.command(
         name="imagine",
