@@ -55,7 +55,6 @@ class aichannel(commands.Cog):
     )
     async def chat(self, ctx, *, message: str):
         """Chat with the AI."""
-        await ctx.defer()
         self.bot.db.ai_prompts.insert_one({
             "username": ctx.author.name,
             "userid": ctx.author.id,
@@ -63,7 +62,7 @@ class aichannel(commands.Cog):
             "guild": ctx.guild.id if ctx.guild else None,
             "channel": ctx.channel.id
         })
-        async with ctx.typing():
+        async with ctx.defer():
             response = await asyncio.to_thread(
                 self.client.chat.completions.create,
                 model=self.model,
@@ -89,7 +88,7 @@ class aichannel(commands.Cog):
             "guild": ctx.guild.id if ctx.guild else None,
             "channel": ctx.channel.id
         })
-        async with ctx.typing():
+        async with ctx.defer():
             try:
                 response = self.client.images.generate(
                     model="dall-e-3",
