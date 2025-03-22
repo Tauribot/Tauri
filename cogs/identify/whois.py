@@ -64,6 +64,7 @@ class Whois(commands.Cog):
         description="Get information about a user"
     )
     async def dc(self, ctx, user: typing.Optional[typing.Union[discord.Member, discord.User]]):
+        await ctx.defer()
         if not user:
             user = ctx.author
 
@@ -183,6 +184,7 @@ class Whois(commands.Cog):
         description="Get information about a Roblox user"
     )
     async def roblox(self, ctx, roblox: str):
+        await ctx.defer()
         client = Client()
         number_pattern = re.compile(r"^\d+$")
         is_number = bool(number_pattern.match(roblox))

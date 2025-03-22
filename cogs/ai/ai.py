@@ -24,6 +24,7 @@ class aichannel(commands.Cog):
     @commands.is_owner()
     async def ai_setup(self, ctx, channel: typing.Union[discord.TextChannel, discord.VoiceChannel]):
         """Chat with the AI in a specific channel."""
+        await ctx.defer()
         if not isinstance(channel, discord.TextChannel):
             return await ctx.send("You can only enable AI in a text channel.")
 
@@ -54,6 +55,7 @@ class aichannel(commands.Cog):
     )
     async def chat(self, ctx, *, message: str):
         """Chat with the AI."""
+        await ctx.defer()
         self.bot.db.ai_prompts.insert_one({
             "username": ctx.author.name,
             "userid": ctx.author.id,
