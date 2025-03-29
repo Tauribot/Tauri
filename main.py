@@ -43,6 +43,21 @@ async def before_invoke(ctx):
         "guild": ctx.guild.id if ctx.guild else None,
         "channel": ctx.channel.id
     })
+
+    search = bot.db.blocklist.find_one({"user_id": ctx.author.id})
+    if search:
+        if search["user_id"] == ctx.author.id:
+            support_url = "https://support.example.com"
+            blockedembed = discord.Embed(
+                title="Service Access Revoked",
+                description=f"You are not eligible to use our service due to a violation of our Terms of Service. If you believe this is a mistake, please contact support.",
+                colour=None
+            )
+            view = discord.ui.View(timeout=None)
+            view.add_item(discord.ui.Button(label="Support", url=support_url))
+
+            await ctx.reply(embed=blockedembed, view=view, ephemeral=True)
+            raise commands.DisabledCommand()
     pass
             
 async def secrets():
@@ -124,7 +139,8 @@ async def main():
             
         token = os.getenv("token")
         if not token:
-            print("Error: 'token' environment variable not set.")
+            print("Error: 'token' environment vari"
+                  "able not set.")
             return
         
         await bot.start(token)

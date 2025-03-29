@@ -78,7 +78,7 @@ class logs(commands.Cog):
         elif isinstance(error, commands.CommandOnCooldown):
             embed.description = f"This command is on cooldown. Try again in {error.retry_after:.2f} seconds"
         elif isinstance(error, commands.DisabledCommand):
-            embed.description = "This command is currently disabled"
+            return
         elif isinstance(error, commands.NoPrivateMessage):
             embed.description = "This command can't be used in private messages"
         else:
