@@ -36,23 +36,18 @@ jobs:
       run: python -m compileall .
       continue-on-error: true
 
-    - name: Send Success Webhook
-      if: success() || (steps.flake8.outcome != 'failure' && steps.syntax.outcome != 'failure')
-      run: curl -X GET ${{ secrets.SUCCESS_WEBHOOK_URL }}
-
     - name: Dokploy Deployment
       if: success() || (steps.flake8.outcome != 'failure' && steps.syntax.outcome != 'failure')
       run: |
         curl -X 'POST' \
-        'https://docker.jadyn.au/api/trpc/application.deploy' \
+        'https://docker.jadyn.au/api/application.deploy' \
         -H 'accept: application/json' \
-        -H 'Authorization: Bearer ${{ secrets.DOKPLOY_AUTH_TOKEN }}' \
+        -H 'x-api-key: ${{ secrets.DOKPLOY_AUTH_TOKEN }}' \
         -H 'Content-Type: application/json' \
         -d '{
-            "json":{
-                "applicationId": "${{ secrets.DOKPLOY_APPLICATION_ID }}"
-            }
+        "applicationId": "${{ secrets.DOKPLOY_APPLICATION_ID }}"
         }'
+        
 
     - name: Send Discord Notification
       if: failure() || steps.flake8.outcome == 'failure' || steps.syntax.outcome == 'failure'

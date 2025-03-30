@@ -26,6 +26,8 @@ async def setup_database():
         print("Connected to the database")
     return bot.db is not None
 
+
+\asda\
 @bot.event 
 async def on_ready():
     await bot.change_presence(status=discord.Status.idle)
