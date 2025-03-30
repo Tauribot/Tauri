@@ -1,6 +1,5 @@
 __pycache__
 .devcontainer
-.github
 .env
 .venv
 .idea
