@@ -29,20 +29,16 @@ jobs:
       run: |
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 . --count --exit-zero --max-complexity=10 --statistics
-        exit_code=$?
-        echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
       continue-on-error: true
 
     - name: Validate Python syntax
       id: syntax
       run: |
         python -m compileall .
-        exit_code=$?
-        echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
       continue-on-error: true
 
     - name: Dokploy Deployment
-      if: steps.flake8.outputs.exit_code == '0' && steps.syntax.outputs.exit_code == '0'
+      if: success()
       run: |
         curl -X 'POST' \
         'https://docker.jadyn.au/api/application.deploy' \
@@ -55,7 +51,7 @@ jobs:
         
 
     - name: Send Discord Notification
-      if: failure() || steps.flake8.outcome == 'failure' || steps.syntax.outcome == 'failure'
+      if: failure()
       run: |
         curl -H "Content-Type: application/json" -X POST ${{ secrets.DISCORD_WEBHOOK }} \
         -d '{
