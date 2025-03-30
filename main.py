@@ -26,6 +26,7 @@ async def setup_database():
         print("Connected to the database")
     return bot.db is not None
 
+\123\
 
 @bot.event 
 async def on_ready():
