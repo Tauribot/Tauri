@@ -15,8 +15,6 @@ if os.getenv("environment") == "development":
 elif os.getenv("environment") == "production":
     bot = commands.Bot(command_prefix=commands.when_mentioned_or('-'), intents=discord.Intents.all())
 
-\asd\
-
 async def setup_database():
     """Initialize database connection"""
     bot.cluster = pymongo.MongoClient(os.getenv("mongourl"))
