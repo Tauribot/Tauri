@@ -47,36 +47,10 @@ jobs:
         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       with:
         args: |
-          {
-            "embeds": [{
-              "title": "❌ Code Validation Failed",
-              "description": "The code validation workflow has failed.",
-              "color": 15158332,
-              "fields": [
-                {
-                  "name": "Repository",
-                  "value": "${{ github.repository }}",
-                  "inline": true
-                },
-                {
-                  "name": "Branch",
-                  "value": "${{ github.ref }}",
-                  "inline": true
-                },
-                {
-                  "name": "Author",
-                  "value": "${{ github.actor }}",
-                  "inline": true
-                },
-                {
-                  "name": "Commit",
-                  "value": "${{ github.sha }}",
-                  "inline": false
-                }
-              ],
-              "footer": {
-                "text": "Click the title to view details"
-              },
-              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            }]
-          }
+          🚨 Code validation failed for ${{ github.repository }}
+
+          Commit: ${{ github.sha }}
+          Branch: ${{ github.ref }}
+          Author: ${{ github.actor }}
+
+          Check the action for details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
