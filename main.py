@@ -46,7 +46,7 @@ async def before_invoke(ctx):
     search = bot.db.blocklist.find_one({"user_id": ctx.author.id})
     if search:
         if search["user_id"] == ctx.author.id:
-            support_url = "https://support.example.com"
+            support_url = "https://discord.gg/VVBDc3RAqC"
             blockedembed = discord.Embed(
                 title="Service Access Revoked",
                 description=f"You are not eligible to use our service due to a violation of our Terms of Service. If you believe this is a mistake, please contact support.",
