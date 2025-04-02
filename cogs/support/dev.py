@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+from handlers.premium import isPremium
 import time
 import os
 
@@ -49,6 +50,14 @@ class DevCommands(commands.Cog):
             await ctx.send(f"Successfully reloaded cog: {cog}")
         except Exception as e:
             await ctx.send(f"Failed to reload cog: {e}")
+
+    @commands.hybrid_command(
+        name="premiumtest",
+        description="Test premium features"
+    )
+    @commands.check(isPremium)
+    async def premium(self, ctx):
+        await ctx.send("You are a premium user!")
 
 async def setup(bot):
     await bot.add_cog(DevCommands(bot))
