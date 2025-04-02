@@ -12,7 +12,7 @@ import re
 class Blacklist(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.support_url = "https://discord.gg/VVBDc3RAqC"
+        self.support_url = os.getenv("support_url")
         self.support_id = [1242439573254963292, 0]
 
     ### Handle Guild Blacklist ###

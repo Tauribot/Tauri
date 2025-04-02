@@ -46,7 +46,7 @@ async def before_invoke(ctx):
     search = bot.db.blocklist.find_one({"user_id": ctx.author.id})
     if search:
         if search["user_id"] == ctx.author.id:
-            support_url = "https://discord.gg/VVBDc3RAqC"
+            support_url = os.getenv("support_url")
             blockedembed = discord.Embed(
                 title="Service Access Revoked",
                 description=f"You are not eligible to use our service due to a violation of our Terms of Service. If you believe this is a mistake, please contact support.",
@@ -60,9 +60,9 @@ async def before_invoke(ctx):
     pass
             
 async def secrets():
-    client = InfisicalSDKClient(host="https://secrets.jadyn.au")
+    client = InfisicalSDKClient(host="https://app.infisical.com")
 
-    pid = "13bd09c9-e403-4432-b3d3-728e31b2d316"
+    pid = "1fc23486-c8b2-4135-a02a-a40be32b3d65"
 
     if os.getenv("environment") == "production":
         slug = "prod"

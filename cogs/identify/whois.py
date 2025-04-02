@@ -7,6 +7,7 @@ import typing
 from handlers.emojis import getemojis
 import bloxlink
 from bloxlink.exceptions import BloxlinkException
+from handlers.premium import isPremium
 import os
 import re
 
