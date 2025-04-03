@@ -7,7 +7,7 @@ import os
 import aiohttp
 import asyncio
 import typing
-
+from handlers.premium import isPremium
 
 class aichannel(commands.Cog):
     def __init__(self, bot):
@@ -53,6 +53,7 @@ class aichannel(commands.Cog):
         name="chat",
         description="Chat with the AI."
     )
+    @commands.check(isPremium)
     async def chat(self, ctx, *, message: str):
         """Chat with the AI."""
         self.bot.db.ai_prompts.insert_one({
@@ -82,6 +83,7 @@ class aichannel(commands.Cog):
         name="imagine",
         description="Create an image with AI."
     )
+    @commands.check(isPremium)
     async def imagine(self, ctx, *, prompt: str, style: typing.Literal["natural", "vivid"] = "natural"):
         """Create an image with AI."""
         self.bot.db.ai_prompts.insert_one({
@@ -103,7 +105,7 @@ class aichannel(commands.Cog):
                 size="1024x1024",
                 user=f"{ctx.author.id}",
             )
-        except openai.BadRequestError as e:
+        except openai.BadRequestError:
             embed = discord.Embed(
                 title="Generation Failed",
                 description="Your request was filtered by the AI model. Please try again with a different prompt.",
