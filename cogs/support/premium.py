@@ -51,7 +51,7 @@ class Premium(commands.Cog):
         description="Add premium to a user or guild."
     )
     @commands.is_owner()
-    async def add_premium(self, ctx, member: typing.Optional[typing.Union[discord.Member, discord.User]], guild: typing.Optional[int], time: typing.Literal["24 hours", "1 week", "2 weeks", "1 month", "3 months", "6 months", "1 year", "lifetime"], reason: str = "No reason provided"):
+    async def add_premium(self, ctx, member: typing.Optional[typing.Union[discord.Member, discord.User]], guild: typing.Optional[str], time: typing.Literal["24 hours", "1 week", "2 weeks", "1 month", "3 months", "6 months", "1 year", "lifetime"], reason: str = "No reason provided"):
         """Add premium to a user or guild"""
         embed = discord.Embed(
             title="Premium Addition",
@@ -67,7 +67,7 @@ class Premium(commands.Cog):
             return
 
         target = member or guild
-        if isinstance(target, int):
+        if isinstance(target, str):
             target_id = target
             target_type = "guild"
         elif isinstance(target, (discord.Member, discord.User)):
@@ -113,7 +113,7 @@ class Premium(commands.Cog):
         description="Remove premium from a user or guild."
     )
     @commands.is_owner()
-    async def remove_premium(self, ctx, member: typing.Optional[typing.Union[discord.Member, discord.User]], guild: typing.Optional[int]):
+    async def remove_premium(self, ctx, member: typing.Optional[typing.Union[discord.Member, discord.User]], guild: typing.Optional[str]):
         """Remove premium from a user or guild"""
         embed = discord.Embed(
             title="Premium Removal",
