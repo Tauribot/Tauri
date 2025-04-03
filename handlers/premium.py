@@ -23,7 +23,7 @@ async def isPremium(ctx):
             color=None
         )
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="Contact Support", url=os.getenv("SUPPORT_URL"), style=discord.ButtonStyle.link))
+        view.add_item(discord.ui.Button(label="Contact Support", url=os.getenv("support_url"), style=discord.ButtonStyle.link))
 
         await ctx.reply(embed=blockedembed, view=view, ephemeral=True)
         raise commands.DisabledCommand()
@@ -35,6 +35,6 @@ async def isPremium(ctx):
         color=None
     )
     view = discord.ui.View()
-    view.add_item(discord.ui.Button(label="Contact Support", url=os.getenv("SUPPORT_URL"), style=discord.ButtonStyle.link))
+    view.add_item(discord.ui.Button(label="Contact Support", url=os.getenv("support_url"), style=discord.ButtonStyle.link))
     await ctx.reply(embed=blockedembed, view=view, ephemeral=True)
     raise commands.DisabledCommand()
