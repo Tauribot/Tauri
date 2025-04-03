@@ -104,7 +104,7 @@ class Premium(commands.Cog):
                 colour=None
             )
             await ctx.send(embed=embed)
-        except Exception as e:
+        except Exception:
             embed.description("An error occurred while adding premium.")
             await ctx.send(embed=embed)
 
@@ -131,10 +131,9 @@ class Premium(commands.Cog):
         target = member or guild
         if isinstance(target, int):
             target_id = target
-            target_type = "guild"
+
         elif isinstance(target, (discord.Member, discord.User)):
             target_id = target.id
-            target_type = "user"
         else:
             embed.description("Invalid target type.")
             await ctx.send(embed=embed)
