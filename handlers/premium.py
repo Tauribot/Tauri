@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import os
 
+
 async def isPremium(ctx):
     """Check if the user or their guild is a premium member"""
     # Check if the command is used in a guild or DM
@@ -22,7 +23,8 @@ async def isPremium(ctx):
             color=None
         )
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="Contact Support", url=os.getenv("SUPPORT_URL")))
+        view.add_item(discord.ui.Button(label="Contact Support", url=os.getenv("SUPPORT_URL"), style=discord.ButtonStyle.link))
+
         await ctx.reply(embed=blockedembed, view=view, ephemeral=True)
         raise commands.DisabledCommand()
 
@@ -33,6 +35,6 @@ async def isPremium(ctx):
         color=None
     )
     view = discord.ui.View()
-    view.add_item(discord.ui.Button(label="Contact Support", url=os.getenv("SUPPORT_URL")))
+    view.add_item(discord.ui.Button(label="Contact Support", url=os.getenv("SUPPORT_URL"), style=discord.ButtonStyle.link))
     await ctx.reply(embed=blockedembed, view=view, ephemeral=True)
     raise commands.DisabledCommand()
