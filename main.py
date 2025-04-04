@@ -141,8 +141,11 @@ async def main():
             print("Error: 'token' environment vari"
                   "able not set.")
             return
-        
-        await bot.start(token)
+        try:
+            await bot.start(token)
+        except Exception as e:
+            print(f"Error starting bot: {str(e)}")
+            return
 
 asyncio.run(main())
 

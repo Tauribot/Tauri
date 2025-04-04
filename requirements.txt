@@ -16,3 +16,6 @@ aiohttp>=3.10.11 # not directly required, pinned by Snyk to avoid a vulnerabilit
 anyio>=4.4.0 # not directly required, pinned by Snyk to avoid a vulnerability
 zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
 starlette>=0.40.0 # not directly required, pinned by Snyk to avoid a vulnerability
+pynacl
+assemblyai
+ffmpeg-python
