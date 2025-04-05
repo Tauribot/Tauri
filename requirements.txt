@@ -19,3 +19,4 @@ starlette>=0.40.0 # not directly required, pinned by Snyk to avoid a vulnerabili
 pynacl
 assemblyai
 ffmpeg-python
+discord-ext-voice-recv
