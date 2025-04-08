@@ -18,7 +18,10 @@ async def isPremium(ctx):
         if premium_guild_data:
             premium_guild = True
 
-    premium_user_data = ctx.bot.db.premium.find_one({"target_id": ctx.author.id, "target_type": "user", "active": True})
+    if ctx.author.id:
+        target = str(ctx.author.id)
+
+    premium_user_data = ctx.bot.db.premium.find_one({"target_id": target, "target_type": "user", "active": True})
     if premium_user_data:
         premium_user = True
 

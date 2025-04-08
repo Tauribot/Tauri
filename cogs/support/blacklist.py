@@ -79,7 +79,7 @@ class Blacklist(commands.Cog):
     )
     async def bl_guild(self, ctx, guild: int):
         """Blacklist a guild"""
-        guild_id = int(str(guild))
+        guild_id = str(guild)
 
         initial = self.bot.db.guildstatus.find_one({"guild_id": guild_id})
 
@@ -105,16 +105,19 @@ class Blacklist(commands.Cog):
         if pretest is False:
             return
 
+        staffid = str(ctx.author.id)
+        userid = str(user.id)
+
         self.bot.db.blocklist.insert_one({
-            "user_id": user.id,
+            "user_id": userid,
             "reason": reason,
-            "staff_id": ctx.author.id,
+            "staff_id": staffid,
             "timestamp": discord.utils.utcnow().isoformat()
         })
 
         embed = discord.Embed(
             title="User Blocked",
-            description=f"{user} ({user.id}) has been blacklisted for `{reason}`.",
+            description=f"{user} ({userid}) has been blacklisted for `{reason}`.",
             colour=None
         )
         await ctx.reply(embed=embed)
@@ -131,11 +134,13 @@ class Blacklist(commands.Cog):
             await ctx.send("User not found")
             return
 
-        self.bot.db.blocklist.delete_one({"user_id": user.id})
+        userid = str(user.id)
+
+        self.bot.db.blocklist.delete_one({"user_id": userid})
 
         embed = discord.Embed(
             title="Block Removed",
-            description=f"{user} ({user.id}) has been removed from the blocklist.",
+            description=f"{user} ({userid}) has been removed from the blocklist.",
             colour=None
         )
 
@@ -151,19 +156,21 @@ class Blacklist(commands.Cog):
         if not user:
             await ctx.send("User not found")
             return
+        
+        userid = str(user.id)
 
-        if not self.bot.db.blocklist.find_one({"user_id": user.id}):
+        if not self.bot.db.blocklist.find_one({"user_id": userid}):
             await ctx.send("User is not blocked.")
             return
 
         self.bot.db.blocklist.update_one(
-            {"user_id": user.id},
+            {"user_id": userid},
             {"$set": {"reason": reason}}
         )
 
         embed = discord.Embed(
             title="Block Edited",
-            description=f"{user} ({user.id}) has been updated with the following reason: {reason}",
+            description=f"{user} ({userid}) has been updated with the following reason: {reason}",
             colour=None
         )
 
@@ -180,7 +187,8 @@ class Blacklist(commands.Cog):
             await ctx.send("User not found")
             return
 
-        blacklist = self.bot.db.blocklist.find_one({"user_id": user.id})
+        userid = str(user.id)
+        blacklist = self.bot.db.blocklist.find_one({"user_id": userid})
 
         if not blacklist:
             await ctx.send("User is not blocked.")
@@ -188,16 +196,17 @@ class Blacklist(commands.Cog):
 
         embed = discord.Embed(
             title="Blacklist Review",
-            description=f"{user} ({user.id}) is blocked for the following reason: {blacklist['reason']}",
+            description=f"{user} ({userid}) is blocked for the following reason: {blacklist['reason']}",
             colour=None
         )
 
         await ctx.reply(embed=embed)
 
 async def can_blacklist(ctx, user):
+    userid = int(str(user.id))
     failure = discord.Embed(
         title="Block Failed",
-        description=f"Failed to block {user} ({user.id})",
+        description=f"Failed to block {user} ({userid})",
         colour=None
     )
 

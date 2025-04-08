@@ -74,7 +74,7 @@ class Premium(commands.Cog):
             target_id = target
             target_type = "guild"
         elif isinstance(target, (discord.Member, discord.User)):
-            target_id = target.id
+            target_id = str(target.id)
             target_type = "user"
         else:
             embed.description("Please specify either a member or a guild, not both.")
@@ -136,7 +136,7 @@ class Premium(commands.Cog):
             target_id = target
 
         elif isinstance(target, (discord.Member, discord.User)):
-            target_id = target.id
+            target_id = str(target.id)
         else:
             embed.description("Invalid target type.")
             await ctx.send(embed=embed)
