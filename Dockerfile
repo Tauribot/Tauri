@@ -7,6 +7,7 @@ WORKDIR /app
 # Install FFmpeg and other dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    curl \
     ffmpeg \
     build-essential \
     libffi-dev \
@@ -27,6 +28,9 @@ COPY . .
 
 # Create recordings directory
 RUN mkdir -p recordings
+
+# Expose the port the app runs on
+EXPOSE 8888
 
 # Default command
 CMD ["python", "main.py"]

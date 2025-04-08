@@ -138,8 +138,7 @@ async def main():
             
         token = os.getenv("token")
         if not token:
-            print("Error: 'token' environment vari"
-                  "able not set.")
+            print("Error: 'token' environment variable not set.")
             return
         try:
             await bot.start(token)
@@ -148,4 +147,3 @@ async def main():
             return
 
 asyncio.run(main())
-

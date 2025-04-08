@@ -1,10 +1,13 @@
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, Response, status, Request
 import time
 import uvicorn
 from typing import Dict
 from discord.ext import commands
 import aiohttp
 import asyncio
+import pymongo
+import os
+from pymongo.errors import ConnectionFailure
 
 app = FastAPI(
     title="Bot API",
@@ -23,11 +26,30 @@ async def start_api():
 async def health_check():
     return { "status": "healthy" }
 
+@app.get("/api/db-health")
+async def db_health_check():
+    cluster = pymongo.MongoClient(os.getenv("mongourl"))
+    try:
+        # Perform a simple operation to check DB health
+        cluster.admin.command("ping")
+        return Response(
+            content='{"status": "healthy", "db": "connected"}',
+            media_type="application/json",
+            status_code=status.HTTP_200_OK
+        )
+    except ConnectionFailure:
+        return Response(
+            content='{"status": "unhealthy", "db": "disconnected"}',
+            media_type="application/json",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
+
 class API(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.app = app
         self.api_task = asyncio.create_task(start_api())
+        self.app.state.bot = bot
 
     async def cog_unload(self):
         """Stop API when cog is unloaded"""
