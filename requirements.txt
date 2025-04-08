@@ -10,7 +10,7 @@ uvicorn
 infisicalsdk
 roblox
 openai
-bloxlink.py
+bloxlink.py~=0.0.2
 PyNaCl
 aiohttp
 anyio
