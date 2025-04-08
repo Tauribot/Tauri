@@ -1,7 +1,5 @@
 from fastapi import FastAPI, Response, status, Request
-import time
 import uvicorn
-from typing import Dict
 from discord.ext import commands
 import aiohttp
 import asyncio

@@ -12,13 +12,27 @@ import re
 class Blacklist(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.task_clear = self.clear_recently_joined.start()
         self.support_url = os.getenv("support_url")
         self.support_id = [1242439573254963292, 0]
+        self.recently_joined = []
+
+    @commands.Cog.listener()
+    async def on_cog_unload(self, cog):
+        if cog == self:
+            self.task_clear.cancel()
+
+    @tasks.loop(seconds=3600)
+    async def clear_recently_joined(self):
+        self.recently_joined = []
 
     ### Handle Guild Blacklist ###
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
         """Check if the guild is blacklisted"""
+
+        if guild.id in self.recently_joined:
+            return
 
         user_record = self.bot.db.blocklist.find_one({"user_id": guild.owner.id})
         guild_record = self.bot.db.guildstatus.find_one({"guild_id": guild.id})
@@ -38,20 +52,25 @@ class Blacklist(commands.Cog):
                 pass
 
             try:
+                self.recently_joined.append(guild.id)
                 await guild.leave()
             except Exception as e:
                 print(f"Failed to leave {guild.name}: {e}")
 
-    ### Blacklist Commands ###
+    
 
+    ### Blacklist Commands ###
     @commands.hybrid_group(
         name="blacklist",
         description="Blacklist commands"
     )
-    @commands.has_role("Blacklist Manager")
+    @commands.is_owner()
     @app_commands.guilds(discord.Object(id=int(1242439573254963292))) # Dev Guild
     async def blacklist(self, ctx):
-        pass
+        """Blacklist commands"""
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help(ctx.command)
+            return
 
 
     @blacklist.command(

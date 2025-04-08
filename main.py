@@ -14,6 +14,8 @@ if os.getenv("environment") == "development":
     bot = commands.Bot(command_prefix=commands.when_mentioned_or('>'), intents=discord.Intents.all())
 elif os.getenv("environment") == "production":
     bot = commands.Bot(command_prefix=commands.when_mentioned_or('-'), intents=discord.Intents.all())
+elif os.getenv("environment") == None:
+    raise Exception("Work environment not set.")
 
 async def setup_database():
     """Initialize database connection"""
@@ -22,9 +24,14 @@ async def setup_database():
         bot.db = pymongo.database.Database(bot.cluster, "cognition-dev")
     elif os.getenv("environment") == "production":
         bot.db = pymongo.database.Database(bot.cluster, "cognition")
-    if bot.db is not None:
+    
+    await asyncio.sleep(1)
+    
+    if bot.cluster:
         print("Connected to the database")
-    return bot.db is not None
+        return True
+    else:
+        raise Exception("Failed to connect to database")
 
 @bot.event 
 async def on_ready():
@@ -35,14 +42,6 @@ async def on_ready():
 
 @bot.before_invoke
 async def before_invoke(ctx):
-    bot.db.commands.insert_one({
-        "username": ctx.author.name,
-        "userid": ctx.author.id,
-        "command": ctx.command.qualified_name,
-        "guild": ctx.guild.id if ctx.guild else None,
-        "channel": ctx.channel.id
-    })
-
     search = bot.db.blocklist.find_one({"user_id": ctx.author.id})
     if search:
         if search["user_id"] == ctx.author.id:
@@ -58,6 +57,17 @@ async def before_invoke(ctx):
             await ctx.reply(embed=blockedembed, view=view, ephemeral=True)
             raise commands.DisabledCommand()
     pass
+
+@bot.after_invoke
+async def after_invoke(ctx):
+    bot.db.commands.insert_one({
+        "username": ctx.author.name,
+        "userid": ctx.author.id,
+        "command": ctx.command.qualified_name,
+        "guild": ctx.guild.id if ctx.guild else None,
+        "channel": ctx.channel.id
+    })
+    pass
             
 async def secrets():
     client = InfisicalSDKClient(host="https://app.infisical.com")
@@ -68,6 +78,9 @@ async def secrets():
         slug = "prod"
     else:
         slug = "dev"
+
+    if os.getenv("vaultid") is None or os.getenv("vaultsecret") is None:
+        raise Exception("Vault ID or Secret not set.")
 
     client.auth.universal_auth.login(
         client_id=os.getenv("vaultid"), 
@@ -89,9 +102,11 @@ async def secrets():
 
     if len(completed) == len(preos):
         print(f"Secrets Available [{len(completed)}]: " + str(completed))
+        completed = []
+        preos = []
         return True
     else:
-        return False
+        raise Exception("Failed to load secrets")
 
 # Load all cogs
     

@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 import os
-
+from internal.emojis import getemojis
 
 async def isPremium(ctx):
     """Check if the user or their guild is a premium member"""
@@ -24,10 +24,13 @@ async def isPremium(ctx):
 
     if premium_user or premium_guild:
         return True
+    
+    emojis = await getemojis()
+    premium_emoji = emojis.get("premium")
 
     # If not premium, send a message and raise an exception
     blockedembed = discord.Embed(
-        title="Premium Command",
+        title=f"{premium_emoji} Premium Command",
         description="Seems like this command is only available to premium servers. If you believe this is a mistake, please contact support.",
         color=None
     )

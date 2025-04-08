@@ -7,7 +7,7 @@ import os
 import aiohttp
 import asyncio
 import typing
-from handlers.premium import isPremium
+from internal.premium import isPremium
 
 class aichannel(commands.Cog):
     def __init__(self, bot):

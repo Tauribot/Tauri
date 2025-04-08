@@ -19,6 +19,11 @@ async def getemojis():
             'hypesquad_balance': '<:balance:1350916394794876982>',
             'active_developer': '<:activedev:1350916219829620777>',
             'roblox': '<:roblox:1351674923365437595>',
+            'premium': '<:premium:1359200354222342275>',
+            'Developer': '<:Developer:1359186532245967028>',
+            'Manager': '<:Manager:1359186513937830202>',
+            'Support': '<:Support:1359186493201055836>',
+            'blocked': '<:blocked:1359187275199545399>',
         }
     elif os.getenv("environment") == "production":
         emojislist = {
@@ -35,5 +40,10 @@ async def getemojis():
             'hypesquad_balance': '<:balance:1350915208620675304>',
             'active_developer': '<:activedev:1350914986540662784>',
             'roblox': '<:roblox:1351674629575544872>',
+            'premium': '<:premium:1359200551891636378>',
+            'Developer': '<:Developer:1359186337713881179>',
+            'Manager': '<:Manager:1359186315677270116>',
+            'Support': '<:Support:1359186357628571970>',
+            'blocked': '<:blocked:1359187363640774906>',
         }
     return emojislist

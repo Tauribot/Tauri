@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-from handlers.premium import isPremium
+from internal.premium import isPremium
 import time
 import os
 

@@ -2,9 +2,7 @@ import discord
 from discord.ext import commands, tasks
 from discord import app_commands
 import typing
-from handlers.premium import isPremium
 import os
-from handlers.emojis import getemojis
 import datetime
 
 
@@ -43,7 +41,12 @@ class Premium(commands.Cog):
     )
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    @commands.is_owner()
     async def premium(self, ctx):
+        """Premium commands"""
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help(ctx.command)
+            return
         pass
 
     @premium.command(

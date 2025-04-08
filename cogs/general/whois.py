@@ -4,18 +4,36 @@ from discord import app_commands
 from roblox import Client, AvatarThumbnailType
 from roblox.utilities.exceptions import UserNotFound
 import typing
-from handlers.emojis import getemojis
 import bloxlink
-from bloxlink.exceptions import BloxlinkException
-from handlers.premium import isPremium
 import os
 import re
+from bloxlink.exceptions import BloxlinkException
+
+from internal.emojis import getemojis
+
 
 
 class Whois(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.badge_emojis = {}
+
+    async def has_role(self, user):
+        staffroles = {
+            "1242478342960058459": "Developer",
+            "1242478351608844370": "Manager",
+            "1242478353269653596": "Support"
+        }
+
+        guild = await self.bot.fetch_guild(os.getenv("support_id"))
+        member = await guild.fetch_member(user.id)
+        filtered = []
+        if member:
+            for role in member.roles:
+                if str(role.id) in staffroles:
+                    filtered.append(staffroles[str(role.id)])
+            return filtered
+        return []
 
     async def get_user_badges(self, user: discord.User) -> list[str]:
         badges = []
@@ -24,8 +42,29 @@ class Whois(commands.Cog):
         # Load emojis at the start of the method
         self.badge_emojis = await getemojis()
 
+        # Staff Badges
         if user.id == 570499080187412480:
             badges.append(f"{self.badge_emojis.get('owner')} Bot Owner")
+        
+        staffroles = await self.has_role(user)
+        if "Developer" in staffroles:
+            badges.append(f"{self.badge_emojis.get('Developer')} Developer")
+        if "Manager" in staffroles:
+            badges.append(f"{self.badge_emojis.get('Manager')} Manager")
+        if "Support" in staffroles:
+            badges.append(f"{self.badge_emojis.get('Support')} Support")
+
+        # Paid Badges
+        premium = self.bot.db.premium.find_one({"target_id": user.id, "target_type": "user", "active": True})
+        if premium:
+            badges.append(f"{self.badge_emojis.get('premium')} Premium")
+
+        # Special Rewards
+        blocked = self.bot.db.blocklist.find_one({"user_id": user.id})
+        if blocked:
+            badges.append(f"{self.badge_emojis.get('blocked')} Blocked User")
+
+        # Other Badges
         if user.bot:
             badges.append(f"{self.badge_emojis.get('bot')} Bot")
         if flags.system:
@@ -71,6 +110,13 @@ class Whois(commands.Cog):
 
         fetched = await self.bot.fetch_user(user.id)
         accent_colour = fetched.accent_colour
+
+        preloading = discord.Embed(
+            title="Loading...",
+            description="Please wait while we load the user information...",
+            color=None
+        )
+        msg = await ctx.send(embed=preloading)
 
         embed = discord.Embed(
             color=accent_colour,
@@ -140,16 +186,20 @@ class Whois(commands.Cog):
 
         # Roles
         if isinstance(user, discord.Member):
-            roles = [role.mention for role in user.roles if role !=
-                     ctx.guild.default_role]
+            roles = sorted(
+                [role for role in user.roles if role != ctx.guild.default_role],
+                key=lambda r: r.position,
+                reverse=True
+            )
             if roles:
                 count = len(roles)
                 if count == 0:
                     embed.add_field(
                         name=f"Roles [{count}]", value="No roles", inline=False)
                 else:
+                    role_mentions = " ".join(role.mention for role in roles)
                     embed.add_field(
-                        name=f"Roles [{count}]", value=" ".join(roles), inline=False)
+                        name=f"Roles [{count}]", value=role_mentions, inline=False)
 
         # Permissions
         if isinstance(user, discord.Member):
@@ -177,7 +227,7 @@ class Whois(commands.Cog):
             except AttributeError:
                 pass
 
-        await ctx.send(embed=embed, view=view)
+        await msg.edit(embed=embed, view=view)
 
 
     @whois.command(
