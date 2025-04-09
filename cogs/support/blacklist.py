@@ -5,6 +5,7 @@ from discord.ext import commands
 from discord import app_commands
 from roblox import Client, AvatarThumbnailType
 from roblox.utilities.exceptions import UserNotFound
+from internal.support.blacklisting import can_blacklist
 import typing
 import os
 import re
@@ -14,7 +15,7 @@ class Blacklist(commands.Cog):
         self.bot = bot
         self.task_clear = self.clear_recently_joined.start()
         self.support_url = os.getenv("support_url")
-        self.support_id = [1242439573254963292, 0]
+        self.support_id = [1242439573254963292,]
         self.recently_joined = []
 
     @commands.Cog.listener()
@@ -98,12 +99,9 @@ class Blacklist(commands.Cog):
         name="add",
         description="Blacklist a user"
     )
+    @commands.check(can_blacklist)
     async def add(self, ctx, user: typing.Union[discord.Member, discord.User], *, reason: str = "No reason provided"):
         """Blacklist a user"""
-
-        pretest = await can_blacklist(ctx, user)
-        if pretest is False:
-            return
 
         staffid = str(ctx.author.id)
         userid = str(user.id)
@@ -127,12 +125,9 @@ class Blacklist(commands.Cog):
         name="remove",
         description="Remove a user from the blacklist"
     )
+    @commands.check(can_blacklist)
     async def remove(self, ctx, user: typing.Union[discord.Member, discord.User]):
         """Remove a user from the blacklist"""
-
-        if not user:
-            await ctx.send("User not found")
-            return
 
         userid = str(user.id)
 
@@ -150,12 +145,9 @@ class Blacklist(commands.Cog):
         name="edit",
         description="Edit a user's block reason"
     )
+    @commands.check(can_blacklist)
     async def edit(self, ctx, user: typing.Union[discord.Member, discord.User], *, reason: str = "No reason provided"):
         """Edit a user's blacklist reason"""
-
-        if not user:
-            await ctx.send("User not found")
-            return
         
         userid = str(user.id)
 
@@ -180,12 +172,9 @@ class Blacklist(commands.Cog):
         name="review",
         description="Review a user's block status"
     )
+    @commands.check(can_blacklist)
     async def review(self, ctx, user: typing.Union[discord.Member, discord.User]):
         """Review a user's blacklist status"""
-
-        if not user:
-            await ctx.send("User not found")
-            return
 
         userid = str(user.id)
         blacklist = self.bot.db.blocklist.find_one({"user_id": userid})
@@ -201,41 +190,6 @@ class Blacklist(commands.Cog):
         )
 
         await ctx.reply(embed=embed)
-
-async def can_blacklist(ctx, user):
-    userid = int(str(user.id))
-    failure = discord.Embed(
-        title="Block Failed",
-        description=f"Failed to block {user} ({userid})",
-        colour=None
-    )
-
-    if not user:
-        failure.description = f"{failure.description}\n```User not found```"
-        await ctx.send(embed=failure)
-        return False
-
-    if any(role.name == "Blacklist Manager" for role in user.roles):
-        failure.description = f"{failure.description}\n```Cannot blacklist a Blacklist Manager```"
-        await ctx.send(embed=failure)
-        return False
-
-    if any(role.name == "Support Team" for role in user.roles):
-        failure.description = f"{failure.description}\n```Cannot blacklist a Support Team member```"
-        await ctx.send(embed=failure)
-        return False
-
-    if user.id == ctx.author.id:
-        failure.description = f"{failure.description}\n```Cannot blacklist yourself```"
-        await ctx.send(embed=failure)
-        return False
-
-    if user.id == ctx.bot.user.id:
-        failure.description = f"{failure.description}\n```Cannot blacklist myself```"
-        await ctx.send(embed=failure)
-        return False
-
-    return True
 
 async def setup(bot):
     await bot.add_cog(Blacklist(bot))

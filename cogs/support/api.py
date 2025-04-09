@@ -54,16 +54,5 @@ class API(commands.Cog):
         if hasattr(self, 'api_task'):
             self.api_task.cancel()
 
-    @commands.command(
-        name="api",
-        description="Get the API URL"
-    )
-    @commands.is_owner()
-    async def api(self, ctx):
-        async with aiohttp.ClientSession() as session:
-            async with session.get("http://localhost:8888/api/health") as resp:
-                data = await resp.json()
-                await ctx.send(f"API Status: {data.get('status')}")
-
 async def setup(bot):
     await bot.add_cog(API(bot))

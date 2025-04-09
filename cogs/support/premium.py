@@ -4,36 +4,15 @@ from discord import app_commands
 import typing
 import os
 import datetime
-
-
-async def calculate_expiry_date(time: str) -> datetime.datetime:
-    """Calculate the expiry date based on the given time string."""
-    now = datetime.datetime.now()
-    if time == "24 hours":
-        expiry_date = now + datetime.timedelta(hours=24)
-    elif time == "1 week":
-        expiry_date = now + datetime.timedelta(weeks=1)
-    elif time == "2 weeks":
-        expiry_date = now + datetime.timedelta(weeks=2)
-    elif time == "1 month":
-        expiry_date = now + datetime.timedelta(days=30)  # Approximating a month as 30 days
-    elif time == "3 months":
-        expiry_date = now + datetime.timedelta(days=90)  # Approximating 3 months as 90 days
-    elif time == "6 months":
-        expiry_date = now + datetime.timedelta(days=180)  # Approximating 6 months as 180 days
-    elif time == "1 year":
-        expiry_date = now + datetime.timedelta(days=365)
-    elif time == "lifetime":
-        expiry_date = None  # Or a very distant date
-    else:
-        raise ValueError("Invalid time specified")
-    return expiry_date
-
+from internal.universal.premium import calculate_expiry_date
 
 class Premium(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.check_premium_status.start()
+
+    async def cog_unload(self):
+        self.check_premium_status.cancel()
 
     @commands.hybrid_group(
         name="premium",
@@ -56,19 +35,19 @@ class Premium(commands.Cog):
     @commands.is_owner()
     async def add_premium(self, ctx, member: typing.Optional[typing.Union[discord.Member, discord.User]], guild: typing.Optional[str], time: typing.Literal["24 hours", "1 week", "2 weeks", "1 month", "3 months", "6 months", "1 year", "lifetime"], reason: str = "No reason provided"):
         """Add premium to a user or guild"""
+
         embed = discord.Embed(
-            title="Premium Addition",
             colour=None
         )
-        if member is None and guild is None:
-            embed.description("Please specify either a member or a guild.")
-            await ctx.send(embed=embed)
-            return
-        if member is not None and guild is not None:
+
+        # Condition to check if either member or guild is provided
+        if member is None and guild is None or member is not None and guild is not None:
+            embed.title("Invalid Choice")
             embed.description("Please specify either a member or a guild, not both.")
             await ctx.send(embed=embed)
             return
 
+        # Condition to check if either member or guild is provided
         target = member or guild
         if isinstance(target, str):
             target_id = target
@@ -77,10 +56,12 @@ class Premium(commands.Cog):
             target_id = str(target.id)
             target_type = "user"
         else:
-            embed.description("Please specify either a member or a guild, not both.")
+            embed.title("Invalid Target")
+            embed.description("Please specify either a member or a guild.")
             await ctx.send(embed=embed)
             return
 
+        # Calculate the expiry date
         expiry_date = await calculate_expiry_date(time)
 
         # Prepare the data for the database
@@ -95,19 +76,19 @@ class Premium(commands.Cog):
         # Insert the premium data into the database
         existing_premium = self.bot.db.premium.find_one({"target_id": target_id})
         if existing_premium:
+            embed.title("Premium Already Exists")
             embed.description(f"{target} already has premium.")
             await ctx.send(embed=embed)
             return
 
+        # Insert the premium data into the database
         try:
             self.bot.db.premium.insert_one(premium_data)
-            embed = discord.Embed(
-                title="Premium Added",
-                description=f"Premium added to {target} for {time}.",
-                colour=None
-            )
+            embed.title("Premium Added")
+            embed.description(f"Premium added to {target} for {time}.")
             await ctx.send(embed=embed)
         except Exception:
+            embed.title("Error")
             embed.description("An error occurred while adding premium.")
             await ctx.send(embed=embed)
 
@@ -119,18 +100,17 @@ class Premium(commands.Cog):
     async def remove_premium(self, ctx, member: typing.Optional[typing.Union[discord.Member, discord.User]], guild: typing.Optional[str]):
         """Remove premium from a user or guild"""
         embed = discord.Embed(
-            title="Premium Removal",
             colour=None
         )
-        if member is None and guild is None:
-            embed.description("Please specify either a member or a guild.")
-            await ctx.send(embed=embed)
-            return
-        if member is not None and guild is not None:
+
+        # Condition to check if either member or guild is provided
+        if member is None and guild is None or member is not None and guild is not None:
+            embed.title("Invalid Choice")
             embed.description("Please specify either a member or a guild, not both.")
             await ctx.send(embed=embed)
             return
 
+        #    Condition to check if either member or guild is provided
         target = member or guild
         if isinstance(target, int):
             target_id = target
@@ -141,34 +121,42 @@ class Premium(commands.Cog):
             embed.description("Invalid target type.")
             await ctx.send(embed=embed)
             return
+        
+        # Check if the target has premium
 
         dbremove = self.bot.db.premium.find_one({"target_id": target_id})
         if not dbremove:
-            embed = discord.Embed(
-                title="Premium Not Found",
-                description=f"{target} does not have premium.",
-                colour=None
-            )
+            embed.title("Premium Not Found")
+            embed.description(f"{target} does not have premium.")
             await ctx.send(embed=embed)
             return
+        
+        # Remove premium
         self.bot.db.premium.delete_one({"target_id": target_id})
-        embed = discord.Embed(
-            title="Premium Removed",
-            description=f"{target} has been removed from premium.",
-            colour=None
-        )
+        embed.title("Premium Removed")
+        embed.description(f"{target} has been removed from premium.")
         await ctx.send(embed=embed)
+
+
+    ### Hourly Subcription Status Check ###
 
     @tasks.loop(hours=1)
     async def check_premium_status(self):
         """Check premium status and deactivate if expired."""
+        
+        # Get time
         now = datetime.datetime.now()
+
+        # Find expired premium
         expired_premiums = self.bot.db.premium.find({"expiry_date": {"$lt": now}, "active": True})
+
+        # Deactivate expired premium
         async for premium in expired_premiums:
             await self.bot.db.premium.update_one({"_id": premium["_id"]}, {"$set": {"active": False}})
             target_id = premium["target_id"]
             target_type = premium["target_type"]
             print(f"Deactivated premium for {target_type} with ID {target_id} due to expiry.")
+    
 
     @check_premium_status.before_loop
     async def before_check_premium_status(self):

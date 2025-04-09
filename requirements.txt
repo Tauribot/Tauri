@@ -19,3 +19,4 @@ starlette
 assemblyai
 ffmpeg-python
 py-cord
+Flask[async]

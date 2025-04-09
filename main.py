@@ -9,11 +9,14 @@ from sentry_sdk.integrations.pymongo import PyMongoIntegration
 import os
 from infisical_sdk import InfisicalSDKClient
 
+intents = discord.Intents.all()
+intents.presences = False
+
 load_dotenv()
 if os.getenv("environment") == "development":
-    bot = commands.Bot(command_prefix=commands.when_mentioned_or('>'), intents=discord.Intents.all())
+    bot = commands.Bot(command_prefix=commands.when_mentioned_or('>'), intents=intents)
 elif os.getenv("environment") == "production":
-    bot = commands.Bot(command_prefix=commands.when_mentioned_or('-'), intents=discord.Intents.all())
+    bot = commands.Bot(command_prefix=commands.when_mentioned_or('-'), intents=intents)
 elif os.getenv("environment") == None:
     raise Exception("Work environment not set.")
 

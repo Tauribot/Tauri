@@ -9,7 +9,7 @@ import os
 import re
 from bloxlink.exceptions import BloxlinkException
 
-from internal.emojis import getemojis
+from internal.universal.emojis import getemojis
 
 
 
@@ -44,7 +44,7 @@ class Whois(commands.Cog):
 
         # Staff Badges
         if user.id == 570499080187412480:
-            badges.append(f"{self.badge_emojis.get('owner')} Bot Owner")
+            badges.append(f"{self.badge_emojis.get('owner')} Owner")
         
         staffroles = await self.has_role(user)
         if "Developer" in staffroles:

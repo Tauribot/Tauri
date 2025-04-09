@@ -9,59 +9,6 @@ class logs(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_error(self, event, *args):
-        """Handle errors that occur in the error handler itself"""
-        error = args[0] if args else None
-        
-        with sentry_sdk.new_scope() as scope:
-            scope.level = "fatal"
-            scope.set_tag("error_handler", "True")
-            scope.set_extra("event", event)
-            event_id = sentry_sdk.capture_exception(error)
-            short_id = event_id[:8]
-            
-            embed = discord.Embed(
-                title="A critical error occurred",
-                description="A critical error occurred in the error handler. Please report this to the developers.",
-                color=discord.Color.dark_red()
-            )
-            if os.getenv("environment") == "development":
-                embed.add_field(name="Error", value=f"```{error}```")
-            embed.set_footer(text=f"Error ID: {short_id}")
-            
-            try:
-                self.bot.db.errors.insert_one({
-                    "event": event,
-                    "error_handler": True,
-                    "short_id": short_id,
-                    "event_id": event_id,
-                    "error": str(error),
-                    "timestamp": discord.utils.utcnow().isoformat()
-                })
-            except Exception as e:
-                print(f"Failed to log error to database: {e}")
-            
-            criticalerror = discord.Embed(
-                title="Critical Error Handler Failure",
-                description=f"Event: {event}\nError Handler: True\nShort ID: {short_id}",
-                color=discord.Color.dark_red()
-            )
-            
-            criticalerror.add_field(name="Error", value=f"```py\n{error}\n```")
-            criticalerror.set_footer(text=f"Error ID: {event_id}")
-            
-            try:
-                channelid = os.getenv("errors")
-                errorlogs = self.bot.get_channel(int(channelid))
-                
-                if errorlogs:
-                    await errorlogs.send(embed=criticalerror)
-                else:
-                    print("Error logs channel not found")
-            except Exception as e:
-                print(f"Failed to send error log: {e}")
-
-    @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         embed = discord.Embed(title="Oops!", color=discord.Color.red())
 
@@ -76,13 +23,16 @@ class logs(commands.Cog):
         elif isinstance(error, commands.BotMissingPermissions):
             embed.description = "I don't have the required permissions to do that!"
         elif isinstance(error, commands.CommandOnCooldown):
-            embed.description = f"This command is on cooldown. Try again in {error.retry_after:.2f} seconds"
+            return
         elif isinstance(error, commands.DisabledCommand):
             return
         elif isinstance(error, commands.NoPrivateMessage):
-            embed.description = "This command can't be used in private messages"
+            return
         else:
+            # Get the original error
             error = getattr(error, 'original', error)
+
+            # Set the scope level to error
             with sentry_sdk.new_scope() as scope:
                 scope.level = "error"
                 scope.set_user({
@@ -90,15 +40,25 @@ class logs(commands.Cog):
                     "username": str(ctx.author),
                     "command": ctx.command.name if ctx.command else "Unknown"
                 })
+
+                # Set the extra to the guild id and channel id
                 scope.set_extra("guild_id", ctx.guild.id if ctx.guild else None)
                 scope.set_extra("channel_id", ctx.channel.id)
+
+                # Capture the exception
                 event_id = sentry_sdk.capture_exception(error)
+
+                # Set the short id to the first 8 characters of the event id
                 short_id = event_id[:8]
 
+                # Set the embed description to the error message
                 embed.description = f"An error occurred while executing the command. Please try again later.\nError ID: `{short_id}`"
+
+                # If the environment is development, add the error to the embed
                 if os.getenv("environment") == "development":
                     embed.add_field(name="Error", value=f"```{error}```")
 
+                # Try to insert the error into the database
                 try:
                     self.bot.db.errors.insert_one({
                         "user": ctx.author.id,
@@ -113,6 +73,7 @@ class logs(commands.Cog):
                 except Exception as e:
                     print(f"Failed to log error to database: {e}")
 
+                # Create the error logging embed
                 logembed = discord.Embed(
                     title="Error Logging",
                     description=f"* User: {ctx.author} ({ctx.author.id})\n"
@@ -128,6 +89,8 @@ class logs(commands.Cog):
                 try:
                     channelid = os.getenv("errors")
                     errorlogs = self.bot.get_channel(int(channelid))
+
+                    # If the error logs channel is found, send the embed
                     if errorlogs:
                         await errorlogs.send(embed=logembed)
                     else:
@@ -135,6 +98,7 @@ class logs(commands.Cog):
                 except Exception as e:
                     print(f"Failed to send error log: {e}")
 
+        # Send the embed to the user
         await ctx.send(embed=embed)
 
 async def setup(bot):

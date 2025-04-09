@@ -7,7 +7,8 @@ import os
 import aiohttp
 import asyncio
 import typing
-from internal.premium import isPremium
+import uuid
+from internal.universal.premium import isPremium
 
 class aichannel(commands.Cog):
     def __init__(self, bot):
@@ -86,12 +87,14 @@ class aichannel(commands.Cog):
     @commands.check(isPremium)
     async def imagine(self, ctx, *, prompt: str, style: typing.Literal["natural", "vivid"] = "natural"):
         """Create an image with AI."""
+        customID = str(uuid.uuid4())
         self.bot.db.ai_prompts.insert_one({
             "username": ctx.author.name,
             "userid": ctx.author.id,
             "prompt": prompt,
             "guild": ctx.guild.id if ctx.guild else None,
-            "channel": ctx.channel.id
+            "channel": ctx.channel.id,
+            "recallID": customID
         })
 
         await ctx.defer()
@@ -114,6 +117,11 @@ class aichannel(commands.Cog):
             return await ctx.reply(embed=embed)
 
         image_url = response.data[0].url
+
+        self.bot.db.ai_prompts.update_one(
+            {"recallID": customID},
+            {"$set": {"image": image_url}}
+        )
 
         async with aiohttp.ClientSession() as session:
             async with session.get(image_url) as resp:

@@ -1,7 +1,31 @@
 import discord
 from discord.ext import commands
 import os
-from internal.emojis import getemojis
+import datetime
+from internal.universal.emojis import getemojis
+
+async def calculate_expiry_date(time: str) -> datetime.datetime:
+    """Calculate the expiry date based on the given time string."""
+    now = datetime.datetime.now()
+    if time == "24 hours":
+        expiry_date = now + datetime.timedelta(hours=24)
+    elif time == "1 week":
+        expiry_date = now + datetime.timedelta(weeks=1)
+    elif time == "2 weeks":
+        expiry_date = now + datetime.timedelta(weeks=2)
+    elif time == "1 month":
+        expiry_date = now + datetime.timedelta(days=30)
+    elif time == "3 months":
+        expiry_date = now + datetime.timedelta(days=90)
+    elif time == "6 months":
+        expiry_date = now + datetime.timedelta(days=180)
+    elif time == "1 year":
+        expiry_date = now + datetime.timedelta(days=365)
+    elif time == "lifetime":
+        expiry_date = None
+    else:
+        raise ValueError("Invalid time specified")
+    return expiry_date
 
 async def isPremium(ctx):
     """Check if the user or their guild is a premium member"""
