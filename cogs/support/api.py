@@ -39,7 +39,7 @@ class API(commands.Cog):
         self.app.state.bot = bot
         
     @app.get('/linked-role')
-    async def linked_roles():
+    async def linked_roles(self):
         url = client.get_oauth_url()
         return RedirectResponse(url=url)
 
