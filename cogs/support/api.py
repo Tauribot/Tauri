@@ -8,7 +8,8 @@ import os
 from pymongo.errors import ConnectionFailure
 from fastapi.responses import RedirectResponse
 from contextlib import asynccontextmanager # Import asynccontextmanager
-from linked_roles import LinkedRolesOAuth2, RoleConnection, RoleMetadataType, RoleMetadataRecord
+from linked_roles import LinkedRolesOAuth2, OAuth2Scopes, RolePlatform, Unauthorized, NotFound
+from linked_roles import AppRoleConnectionMetadataRecordType as RoleConnection, RoleMetadataType, RoleMetadataRecord
 from internal.universal.staff import has_role
 
 # Initialize LinkedRolesOAuth2 client
@@ -17,7 +18,7 @@ client = LinkedRolesOAuth2(
     client_secret=os.getenv("client_secret"),
     redirect_uri='https://staff.tauribot.xyz/verified-role', # Ensure this matches Discord Dev Portal
     token=os.getenv("token"),
-    scopes=('role_connections.write', 'identify'),
+    scopes=(OAuth2Scopes.role_connection_write, OAuth2Scopes.identify),
 )
 
 # --- FastAPI Lifespan Management ---
@@ -140,23 +141,18 @@ class API(commands.Cog):
     async def setup_linked_role(self, ctx: commands.Context):
         """Command to register the necessary role connection metadata with Discord."""
         await ctx.defer(ephemeral=True)
-        records = [
-            RoleMetadataRecord(
-                key='is_staff',
-                name='Tauri Staff Member',
-                description='Whether the user is a verified staff member.',
-                type=RoleMetadataType.boolean_equal,
-            )
-        ]
-
-        try:
-            # Ensure client is started (should be by lifespan) before registering
-            async with client:
-                registered_records = await client.register_role_metadata(records=records, force=True)
-                await ctx.send(f'Registered role metadata successfully: {registered_records}', ephemeral=True)
-        except Exception as e:
-            await ctx.send(f'Failed to register role metadata: {e}', ephemeral=True)
-
+        async with client:
+            records = [
+                RoleMetadataRecord(
+                    key='is_staff',
+                    name='Tauri Staff Member',
+                    description='Whether the user is a verified staff member.',
+                    type=RoleMetadataType.boolean_equal,
+                )
+            ]
+            
+            registered_records = await client.register_role_metadata(records=records, force=True)
+            await ctx.send(f'Registered role metadata successfully: {registered_records}', ephemeral=True)
 # --- Cog Setup Function ---
 
 async def setup(bot):
