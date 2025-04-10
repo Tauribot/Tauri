@@ -72,6 +72,7 @@ class API(commands.Cog):
         records = (
             RoleMetadataRecord(
                 key='is_staff',
+                name='Staff',
                 type=RoleMetadataType.boolean_equal
             )
         )
