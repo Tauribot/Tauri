@@ -40,7 +40,7 @@ async def setup_database():
 async def on_ready():
     await bot.change_presence(status=discord.Status.idle)
     if os.getenv("environment") == "production":
-        channel = bot.get_channel(1349463744278691870)
+        channel = bot.get_channel(1359904061851177141)
     else:
         pass
     
