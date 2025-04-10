@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Response, status, Request, HTTPException
 import uvicorn
 from discord.ext import commands
-import aiohttp # Ensure aiohttp is installed, linked_roles likely uses it
+import aiohttp
+import json
 import asyncio
 import pymongo
 import os
