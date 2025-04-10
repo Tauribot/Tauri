@@ -69,13 +69,13 @@ class API(commands.Cog):
     )
     @commands.is_owner()
     async def setup_linked_role(self, ctx):
-        records = (
+        records = [
             RoleMetadataRecord(
                 key='is_staff',
                 name='Staff',
                 type=RoleMetadataType.boolean_equal
             )
-        )
+        ]
         
         async with client:
             registered_records = await client.register_role_metadata(records=records, force=True)
