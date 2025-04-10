@@ -38,20 +38,30 @@ async def start_api():
     return True
 
 class API(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.app = app  # Ensure you have the FastAPI instance
+    def __init__(self, client_id, client_secret, redirect_uri, token, scopes):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.redirect_uri = redirect_uri
+        self.token = token
+        self.scopes = scopes
+        self._session = aiohttp.ClientSession()
         self.api_task = asyncio.create_task(start_api())
         
+    async def close(self):
+        await self._session.close()
+        
     @app.get('/verified-role')
-    async def verified_role(code: str):
-        token = await client.get_access_token(code)
+    async def verified_role(self, code: str):
+        try:
+            token = await client.get_access_token(code)
+        except Exception as e:
+            return {"error": str(e)}  # Return error message if token retrieval fails
+
         user = await client.fetch_user(token)
         if user is None:
             raise Exception('User not found')
         
-        # Check if the user has staff roles
-        roles = await has_role(user)  
+        roles = await has_role(self.bot, user)
 
         role = await user.fetch_role_connection()
         if role is None:
