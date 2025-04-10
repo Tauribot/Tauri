@@ -139,20 +139,62 @@ class API(commands.Cog):
     )
     @commands.is_owner()
     async def setup_linked_role(self, ctx: commands.Context):
-        """Command to register the necessary role connection metadata with Discord."""
+        """Command to register the necessary role connection metadata with Discord via HTTP."""
         await ctx.defer(ephemeral=True)
-        async with client:
-            records = [
-                RoleMetadataRecord(
-                    key='is_staff',
-                    name='Tauri Staff Member',
-                    description='Whether the user is a verified staff member.',
-                    type=RoleMetadataType.boolean_equal,
-                )
-            ]
-            
-            registered_records = await client.register_role_metadata(records=records, force=True)
-            await ctx.send(f'Registered role metadata successfully: {registered_records}', ephemeral=True)
+
+        client_id = os.getenv("client_id")
+        bot_token = os.getenv("token")
+
+        if not client_id or not bot_token:
+            await ctx.send("Error: `client_id` or `token` environment variable not set.", ephemeral=True)
+            print("Error: Missing client_id or token for role metadata registration.")
+            return
+
+        url = f'https://discord.com/api/v10/applications/{client_id}/role-connections/metadata'
+
+        # Define the metadata payload
+        body = [
+            {
+                'key': 'is_staff', # Your specific key
+                'name': 'Tauri Staff Member', # User-facing name
+                'description': 'Whether the user is a verified staff member.', # User-facing description
+                'type': 7, # 7 corresponds to boolean_equal
+            }
+        ]
+
+        headers = {
+          'Content-Type': 'application/json',
+          'Authorization': f'Bot {bot_token}',
+        }
+
+        try:
+            # Create a temporary session for this request
+            async with aiohttp.ClientSession(headers=headers) as session:
+                async with session.put(url, data=json.dumps(body)) as response:
+                    if response.ok:
+                        try:
+                            data = await response.json()
+                            await ctx.send(f'Registered role metadata successfully: ```json\n{json.dumps(data, indent=2)}```', ephemeral=True)
+                            print(f"Role metadata registered: {data}")
+                        except aiohttp.ContentTypeError:
+                            # Handle cases where response is OK but not JSON (shouldn't happen for this endpoint on success)
+                            text_data = await response.text()
+                            await ctx.send(f'Registered role metadata successfully (non-JSON response): ```\n{text_data}```', ephemeral=True)
+                            print(f"Role metadata registered (non-JSON): {text_data}")
+                    else:
+                        # Handle error response
+                        error_text = await response.text()
+                        await ctx.send(f'Failed to register role metadata. Status: {response.status}\n```\n{error_text}```', ephemeral=True)
+                        print(f"Error registering role metadata. Status: {response.status}, Response: {error_text}")
+
+        except aiohttp.ClientError as e:
+            # Handle client-side errors (e.g., connection refused)
+            await ctx.send(f'Failed to register role metadata due to a connection error: {e}', ephemeral=True)
+            print(f"aiohttp ClientError during role metadata registration: {e}")
+        except Exception as e:
+            # Handle other unexpected errors
+            await ctx.send(f'An unexpected error occurred: {e}', ephemeral=True)
+            print(f"Unexpected error during role metadata registration: {e}")
 # --- Cog Setup Function ---
 
 async def setup(bot):
