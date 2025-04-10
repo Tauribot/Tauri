@@ -8,7 +8,7 @@ import bloxlink
 import os
 import re
 from bloxlink.exceptions import BloxlinkException
-
+from internal.universal.staff import has_role
 from internal.universal.emojis import getemojis
 
 
@@ -17,23 +17,6 @@ class Whois(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.badge_emojis = {}
-
-    async def has_role(self, user):
-        staffroles = {
-            "1242478342960058459": "Developer",
-            "1242478351608844370": "Manager",
-            "1242478353269653596": "Support"
-        }
-
-        guild = await self.bot.fetch_guild(os.getenv("support_id"))
-        member = await guild.fetch_member(user.id)
-        filtered = []
-        if member:
-            for role in member.roles:
-                if str(role.id) in staffroles:
-                    filtered.append(staffroles[str(role.id)])
-            return filtered
-        return []
 
     async def get_user_badges(self, user: discord.User) -> list[str]:
         badges = []
@@ -46,7 +29,7 @@ class Whois(commands.Cog):
         if user.id == 570499080187412480:
             badges.append(f"{self.badge_emojis.get('owner')} Owner")
         
-        staffroles = await self.has_role(user)
+        staffroles = await has_role(self.bot, user)
         if "Developer" in staffroles:
             badges.append(f"{self.badge_emojis.get('Developer')} Developer")
         if "Manager" in staffroles:

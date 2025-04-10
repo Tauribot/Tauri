@@ -14,9 +14,9 @@ intents.presences = False
 
 load_dotenv()
 if os.getenv("environment") == "development":
-    bot = commands.Bot(command_prefix=commands.when_mentioned_or('>'), intents=intents)
+    bot = commands.Bot(command_prefix=commands.when_mentioned_or('>'), intents=intents, help_command=None)
 elif os.getenv("environment") == "production":
-    bot = commands.Bot(command_prefix=commands.when_mentioned_or('-'), intents=intents)
+    bot = commands.Bot(command_prefix=commands.when_mentioned_or('-'), intents=intents, help_command=None)
 elif os.getenv("environment") == None:
     raise Exception("Work environment not set.")
 

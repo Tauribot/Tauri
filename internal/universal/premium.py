@@ -56,6 +56,8 @@ async def isPremium(ctx):
     premium_emoji = emojis.get("premium")
 
     # If not premium, send a message and raise an exception
+    print(ctx.command.qualified_name)
+    
     blockedembed = discord.Embed(
         title=f"{premium_emoji} Premium Command",
         description="Seems like this command is only available to premium servers. If you believe this is a mistake, please contact support.",

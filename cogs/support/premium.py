@@ -23,9 +23,6 @@ class Premium(commands.Cog):
     @commands.is_owner()
     async def premium(self, ctx):
         """Premium commands"""
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
-            return
         pass
 
     @premium.command(
