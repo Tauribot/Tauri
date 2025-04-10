@@ -7,7 +7,7 @@ import pymongo
 import os
 from pymongo.errors import ConnectionFailure
 from fastapi.responses import RedirectResponse
-from linked_roles import LinkedRolesOAuth2, RoleConnection, UserNotFound
+from linked_roles import LinkedRolesOAuth2, RoleConnection
 from internal.universal.staff import has_role
 
 client = LinkedRolesOAuth2(
@@ -48,7 +48,7 @@ class API(commands.Cog):
         token = await client.get_access_token(code)
         user = await client.fetch_user(token)
         if user is None:
-            raise UserNotFound('User not found')
+            raise Exception('User not found')
         
         # Check if the user has staff roles
         roles = await has_role(self.bot, user)  
