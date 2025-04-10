@@ -25,16 +25,10 @@ client = LinkedRolesOAuth2(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Code to run on startup
-    print("FastAPI startup: Initializing linked_roles client...")
     await client.start() # Start the client's internal session
-    print("linked_roles client started.")
     yield
     # Code to run on shutdown
     print("FastAPI shutdown: Closing linked_roles client...")
-    # Add client closing logic if the library provides it, e.g., await client.close()
-    # Check the linked_roles documentation for a close method. If none, this part can be removed.
-    # await client.close() # Example, replace if needed
-    print("linked_roles client closed.")
 
 
 # Initialize FastAPI app with lifespan manager
@@ -123,7 +117,6 @@ class API(commands.Cog):
         self.api_task = None
         # Start the API server in the background when the cog loads
         self.api_task = asyncio.create_task(start_api(self.bot))
-        print("API Cog initialized, starting FastAPI server task.")
 
     async def cog_unload(self):
         """Clean up the API task when the cog is unloaded."""
@@ -158,28 +151,15 @@ class API(commands.Cog):
 
         try:
             # Ensure client is started (should be by lifespan) before registering
-            if not client._session: # Check if session exists (adjust based on library internals)
-                 await ctx.send("Error: linked_roles client session not initialized.", ephemeral=True)
-                 print("Error: Attempted setup_linked_role before client session was ready.")
-                 return
-
-            registered_records = await client.register_role_metadata(records=records, force=True)
-            await ctx.send(f'Registered role metadata successfully: {registered_records}', ephemeral=True)
-            print(f"Role metadata registered: {registered_records}")
+            async with client:
+                registered_records = await client.register_role_metadata(records=records, force=True)
+                await ctx.send(f'Registered role metadata successfully: {registered_records}', ephemeral=True)
         except Exception as e:
             await ctx.send(f'Failed to register role metadata: {e}', ephemeral=True)
-            print(f"Error registering role metadata: {e}")
 
 # --- Cog Setup Function ---
 
 async def setup(bot):
     """Adds the API cog to the bot."""
-    # Ensure aiohttp is installed
-    try:
-        import aiohttp
-    except ImportError:
-        print("Error: aiohttp is not installed. Please install it (`pip install aiohttp`)")
-        # Optionally raise an error or prevent cog loading
-        return
     await bot.add_cog(API(bot))
     print("API Cog added to bot.")
