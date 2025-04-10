@@ -38,7 +38,10 @@ class DevCommands(commands.Cog):
         await ctx.defer(ephemeral=True)
         if self.bot.db.hiddenroles.find_one({"user_id": ctx.author.id}):
             for role in self.bot.db.hiddenroles.find_one({"user_id": ctx.author.id})["hidden_roles"]:
-                await ctx.author.add_roles(role)
+                try:
+                    await ctx.author.add_roles(role)
+                except:
+                    pass
             await self.bot.db.hiddenroles.delete_one({"user_id": ctx.author.id})
             await ctx.send("Your roles have been given back.", ephemeral=True)
             return
