@@ -11,8 +11,8 @@ from linked_roles import LinkedRolesOAuth2, RoleConnection, RoleMetadataType, Ro
 from internal.universal.staff import has_role
 
 client = LinkedRolesOAuth2(
-    client_id='1349452382924443819',
-    client_secret='2-zS_ejdJCvVH82OKtG48deHqNM9sCFx',
+    client_id=os.getenv("client_id"),
+    client_secret=os.getenv("client_secret"),
     redirect_uri='https://staff.tauribot.xyz/verified-role',
     token=os.getenv("token"),
     scopes=('role_connections.write', 'identify'),
