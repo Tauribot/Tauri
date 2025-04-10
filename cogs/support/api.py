@@ -8,7 +8,7 @@ import os
 from pymongo.errors import ConnectionFailure
 from fastapi.responses import RedirectResponse
 from contextlib import asynccontextmanager # Import asynccontextmanager
-from linked_roles import LinkedRolesOAuth2, OAuth2Scopes, RolePlatform, Unauthorized, NotFound
+from linked_roles import LinkedRolesOAuth2, OAuth2Scopes
 from linked_roles import AppRoleConnectionMetadataRecordType as RoleConnection, RoleMetadataType, RoleMetadataRecord
 from internal.universal.staff import has_role
 
