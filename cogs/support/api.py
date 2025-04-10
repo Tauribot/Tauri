@@ -83,18 +83,30 @@ async def verified_role(request: Request, code: str):
 
     # Fetch or create role connection object
     try:
-        role_connection = await user.fetch_role_connection()
-        if role_connection is None:
-            role_connection = RoleConnection(platform_name='Tauri Staff', platform_username=str(user))
-            role_connection.add_metadata(key='is_staff', value=True if is_staff_member else False)
+        # Fetch existing connection details primarily to preserve platform info if set.
+        existing_connection = await user.fetch_role_connection()
 
-        if role_connection.metadata.get('is_staff') != is_staff_member:
-            role_connection.metadata['is_staff'] = is_staff_member
-            print(f"Updated role connection metadata for {user.id}: {role_connection.metadata}")
-        else:
-            print(f"Role connection metadata for {user.id} is already up to date.")
+        # Determine platform details. Use existing if available, otherwise default.
+        platform_name = existing_connection.platform_name if existing_connection else 'Tauri Staff'
+        platform_username = existing_connection.platform_username if existing_connection else str(user)
+        print(f"Using platform_name='{platform_name}', platform_username='{platform_username}' for {user.id}")
 
-        await user.edit_role_connection(role_connection)
+        # 1. Create a new RoleConnection object
+        new_role_connection = RoleConnection(
+            platform_name=platform_name,
+            platform_username=platform_username
+        )
+
+        # 2. Add the desired metadata to the *new* object.
+        #    This won't conflict as the object is fresh.
+        current_value = True if is_staff_member else False
+        new_role_connection.add_metadata(key='is_staff', value=current_value)
+        print(f"Prepared new role connection for {user.id} with 'is_staff' = {current_value}")
+
+        # 3. Send the new, complete connection object to Discord.
+        #    This effectively replaces the old connection state with the new one.
+        await user.edit_role_connection(new_role_connection)
+        print(f"Successfully edited role connection for {user.id}")
     except Exception as e:
         print(f"Error updating role connection for {user.id}: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update Discord role connection")
