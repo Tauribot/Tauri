@@ -29,7 +29,7 @@ class Whois(commands.Cog):
         if user.id == 570499080187412480:
             badges.append(f"{self.badge_emojis.get('owner')} Owner")
         
-        staffroles = await has_role(self, user)
+        staffroles = await has_role(self.bot, user)
         if "Developer" in staffroles:
             badges.append(f"{self.badge_emojis.get('Developer')} Developer")
         if "Manager" in staffroles:

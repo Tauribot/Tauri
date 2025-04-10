@@ -1,14 +1,14 @@
 import os
 import discord
 
-async def has_role(self, user):
+async def has_role(bot, user):
     staffroles = {
         "1242478342960058459": "Developer",
         "1242478351608844370": "Manager",
         "1242478353269653596": "Support"
     }
 
-    guild = await self.bot.fetch_guild(os.getenv("support_id"))
+    guild = await bot.fetch_guild(os.getenv("support_id"))
     member = await guild.fetch_member(user.id)
     filtered = []
     if member:
