@@ -91,7 +91,9 @@ async def verified_role(request: Request, code: str):
         if role_connection.metadata.get('is_staff') != is_staff_member:
             role_connection.metadata['is_staff'] = is_staff_member
             print(f"Updated role connection metadata for {user.id}: {role_connection.metadata}")
-        
+        else:
+            print(f"Role connection metadata for {user.id} is already up to date.")
+
         await user.edit_role_connection(role_connection)
     except Exception as e:
         print(f"Error updating role connection for {user.id}: {e}")
