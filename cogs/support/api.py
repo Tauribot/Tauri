@@ -42,7 +42,6 @@ class API(commands.Cog):
         self.bot = bot
         self.app = app  # Ensure you have the FastAPI instance
         self.api_task = asyncio.create_task(start_api())
-        self.app.state.bot = bot
         
     @app.get('/verified-role')
     async def verified_role(code: str):
@@ -51,10 +50,8 @@ class API(commands.Cog):
         if user is None:
             raise Exception('User not found')
         
-        self = self.app.state.bot
-        
         # Check if the user has staff roles
-        roles = await has_role(self, user)  
+        roles = await has_role(user)  
 
         role = await user.fetch_role_connection()
         if role is None:
