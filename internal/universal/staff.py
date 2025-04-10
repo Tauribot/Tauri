@@ -8,6 +8,13 @@ staffroles = {
     "1242478354930462720": "Staff Team"
  }
 
+staffroleid = [
+    1242478342960058459,
+    1242478351608844370,
+    1242478353269653596,
+    1242478354930462720,
+]
+
 async def has_role(bot, user):
     guild = await bot.fetch_guild(os.getenv("support_id"))
     member = await guild.fetch_member(user.id)

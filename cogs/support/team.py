@@ -2,9 +2,10 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from internal.universal.premium import isPremium
-from internal.universal.staff import staffroles
+from internal.universal.staff import staffroleid
 import time
 import os
+import asyncio
 
 
 class DevCommands(commands.Cog):
@@ -31,38 +32,73 @@ class DevCommands(commands.Cog):
 
     @commands.hybrid_command(
         name="toggle",
-        description="Hide support roles."
+        description="Hide or show your support roles."
     )
-    @commands.has_role(1359893058447212574)
-    async def hideroles(self, ctx):
+    @commands.has_role(1359893058447212574) # Make sure this role ID is correct and accessible
+    async def toggle_roles(self, ctx):
+        """Toggles the visibility of the user's support roles."""
         await ctx.defer(ephemeral=True)
-        if self.bot.db.hiddenroles.find_one({"user_id": ctx.author.id}):
-            for role in self.bot.db.hiddenroles.find_one({"user_id": ctx.author.id})["hidden_roles"]:
-                try:
-                    await ctx.author.add_roles(role)
-                except:
-                    pass
-            await self.bot.db.hiddenroles.delete_one({"user_id": ctx.author.id})
-            await ctx.send("Your roles have been given back.", ephemeral=True)
-            return
         
-        user_roles = ctx.author.roles
-        staff_roles = [role.id for role in user_roles if role.id in staffroles]
-        removed_roles = []
-        if staff_roles:
-            for role in staff_roles:
-                await ctx.author.remove_roles(role)
-                removed_roles.append(role)
-        if removed_roles:
-            await ctx.send(f"Removed {', '.join([self.bot.get_role(role).name for role in removed_roles])} from you.", ephemeral=True)
+        hidden_data = self.bot.db.hiddenroles.find_one({"user_id": ctx.author.id})
+
+        if hidden_data:
+            # Roles are currently hidden, let's restore them
+            role_ids_to_restore = hidden_data.get("hidden_roles", [])
+            roles_to_restore = []
+            not_found_roles = []
+
+            for role_id in role_ids_to_restore:
+                role = ctx.guild.get_role(role_id)
+                if role:
+                    roles_to_restore.append(role)
+                else:
+                    not_found_roles.append(str(role_id)) # Keep track of roles that couldn't be found
+
+            if roles_to_restore:
+                try:
+                    await ctx.author.add_roles(*roles_to_restore, reason="Toggled roles back on")
+                    restored_names = ', '.join([r.name for r in roles_to_restore])
+                    message = f"Restored roles: {restored_names}."
+                except discord.Forbidden:
+                    message = "I don't have permission to add roles back to you."
+                except discord.HTTPException as e:
+                    message = f"Failed to add roles due to an error: {e}"
+            else:
+                message = "No valid roles found to restore."
+
+            # Clean up DB entry regardless of success/failure to add roles
+            self.bot.db.hiddenroles.delete_one({"user_id": ctx.author.id})
+
+            if not_found_roles:
+                message += f"\nNote: Could not find role(s) with ID(s): {', '.join(not_found_roles)}. They might have been deleted."
+
+            await ctx.send(message, ephemeral=True)
+
         else:
-            await ctx.send("You don't have any support roles.", ephemeral=True)
+            # Roles are currently visible, let's hide them
+            user_roles = ctx.author.roles
+            # Ensure staffroleid contains integer IDs
+            roles_to_hide = [role for role in user_roles if role.id in staffroleid]
+
+            if roles_to_hide:
+                role_ids_to_hide = [role.id for role in roles_to_hide]
+                try:
+                    await ctx.author.remove_roles(*roles_to_hide, reason="Toggled roles off")
+                    removed_names = ', '.join([r.name for r in roles_to_hide])
+                    self.bot.db.hiddenroles.update_one(
+                        {"user_id": ctx.author.id},
+                        {"$set": {"hidden_roles": role_ids_to_hide}},
+                        upsert=True
+                    )
+                    await ctx.send(f"Hid roles: {removed_names}.", ephemeral=True)
+                except discord.Forbidden:
+                    await ctx.send("I don't have permission to remove roles from you.", ephemeral=True)
+                except discord.HTTPException as e:
+                    await ctx.send(f"Failed to remove roles due to an error: {e}", ephemeral=True)
+            else:
+                await ctx.send("You don't have any support roles to hide.", ephemeral=True)
             
-        self.bot.db.hiddenroles.update_one(
-            {"user_id": ctx.author.id},
-            {"$set": {"hidden_roles": removed_roles}},
-            upsert=True
-        )
+        
         
 
     ### Dev Commands ###
