@@ -45,12 +45,14 @@ class API(commands.Cog):
         self.app.state.bot = bot
         
     @app.get('/verified-role')
-    async def verified_role(self, code: str):
+    async def verified_role(code: str):
         token = await client.get_access_token(code)
         user = await client.fetch_user(token)
         if user is None:
             raise Exception('User not found')
-            
+        
+        self = self.app.state.bot
+        
         # Check if the user has staff roles
         roles = await has_role(self, user)  
 
