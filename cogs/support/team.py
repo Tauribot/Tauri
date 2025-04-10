@@ -28,6 +28,30 @@ class DevCommands(commands.Cog):
 
         await message.edit(content=None, embed=embed)
         
+    @commands.hybrid_command(
+        name="help",
+        description="Show help"
+    )
+    async def help(self, ctx):
+        await ctx.defer(ephemeral=True)
+        
+        embed = discord.Embed(
+            title="Help",
+            description="Hello, I'm Tauri! I'm a bot that helps you with your server. I'm still in development, so please be patient with me!",
+            color=None
+        )
+        embed.add_field(name="Tauri Information", value=f"Servers: `{len(self.bot.guilds)}`\nUsers: `{len(self.bot.users)}`\nUptime: `{self.bot.uptime}`\nLatency: `{round(self.bot.latency * 1000)}ms`")
+        embed.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar.url)
+        embed.set_thumbnail(url=ctx.bot.user.display_avatar.url)
+        
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(label="Support Server", style=discord.ButtonStyle.link, url="https://discord.gg/VVBDc3RAqC"))
+        view.add_item(discord.ui.Button(label="Documentation", style=discord.ButtonStyle.link, url="https://docs.tauribot.xyz"))
+        
+        await ctx.send(embed=embed, view=view)
+        
+        
+        
     ## Team Commands ##
 
     @commands.hybrid_command(
@@ -97,10 +121,7 @@ class DevCommands(commands.Cog):
                     await ctx.send(f"Failed to remove roles due to an error: {e}", ephemeral=True)
             else:
                 await ctx.send("You don't have any support roles to hide.", ephemeral=True)
-            
         
-        
-
     ### Dev Commands ###
 
     devguild = int(1242439573254963292)
