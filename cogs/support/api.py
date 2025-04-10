@@ -29,26 +29,6 @@ async def linked_roles():
     url = client.get_oauth_url()
     return RedirectResponse(url=url)
 
-@app.get('/verified-role')
-async def verified_role(code: str):
-    token = await client.get_access_token(code)
-    user = await client.fetch_user(token)
-    if user is None:
-        raise Exception('User not found')
-        
-    # Check if the user has staff roles
-    roles = await has_role(user)  
-
-    role = await user.fetch_role_connection()
-    if role is None:
-        role = RoleConnection(platform_name='Discord', platform_username=str(user))
-        role.add_metadata(key='is_staff', value=bool(roles))
-        await user.edit_role_connection(role)
-    
-    return 'Role metadata set successfully. Please check your Discord profile.'
-
-
-
 async def start_api():
     """Start the FastAPI server"""
     config = uvicorn.Config(app, host="0.0.0.0", port=8888, log_level="info")
@@ -63,6 +43,24 @@ class API(commands.Cog):
         self.app = app  # Ensure you have the FastAPI instance
         self.api_task = asyncio.create_task(start_api())
         self.app.state.bot = bot
+        
+    @app.get('/verified-role')
+    async def verified_role(self, code: str):
+        token = await client.get_access_token(code)
+        user = await client.fetch_user(token)
+        if user is None:
+            raise Exception('User not found')
+            
+        # Check if the user has staff roles
+        roles = await has_role(self, user)  
+
+        role = await user.fetch_role_connection()
+        if role is None:
+            role = RoleConnection(platform_name='Discord', platform_username=str(user))
+            role.add_metadata(key='is_staff', value=bool(roles))
+            await user.edit_role_connection(role)
+        
+        return 'Role metadata set successfully. Please check your Discord profile.'
     
     @commands.hybrid_command(
         name='setup-linked-role',
@@ -75,14 +73,13 @@ class API(commands.Cog):
             RoleMetadataRecord(
                 key='is_staff',
                 name='Staff',
-                type=RoleMetadataType.boolean_equal
+                description='Whether the user is a staff member for Tauri.',
+                type=RoleMetadataType.boolean_equal,
             )
         ]
         
-        async with client:
-            registered_records = await client.register_role_metadata(records=records, force=True)
-            
-        await ctx.send(f'Registered role metadata successfully. {registered_records}')
+        records = await client.register_role_metadata(records=records, force=True)
+        await ctx.send(f'Registered role metadata successfully. {records}')
 
 async def setup(bot):
     await bot.add_cog(API(bot))
