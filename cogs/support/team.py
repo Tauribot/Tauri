@@ -36,7 +36,6 @@ class DevCommands(commands.Cog):
         await ctx.defer(ephemeral=True)
         
         embed = discord.Embed(
-            title="Help",
             description="Hello, I'm Tauri! I'm a bot that helps you with your server. I'm still in development, so please be patient with me!",
             color=None
         )
