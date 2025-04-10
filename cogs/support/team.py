@@ -40,7 +40,7 @@ class DevCommands(commands.Cog):
             description="Hello, I'm Tauri! I'm a bot that helps you with your server. I'm still in development, so please be patient with me!",
             color=None
         )
-        embed.add_field(name="Tauri Information", value=f"Servers: `{len(self.bot.guilds)}`\nUsers: `{len(self.bot.users)}`\nUptime: `{self.bot.uptime}`\nLatency: `{round(self.bot.latency * 1000)}ms`")
+        embed.add_field(name="Tauri Information", value=f"Servers: `{len(self.bot.guilds)}`\nUsers: `{len(self.bot.users)}`\nLatency: `{round(self.bot.latency * 1000)}ms`")
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar.url)
         embed.set_thumbnail(url=ctx.bot.user.display_avatar.url)
         
