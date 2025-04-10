@@ -39,8 +39,12 @@ async def setup_database():
 @bot.event 
 async def on_ready():
     await bot.change_presence(status=discord.Status.idle)
-    channel = bot.get_channel(1349463744278691870)
-    await channel.send(f"{bot.user.name} is ready to serve!")
+    if os.getenv("environment") == "production":
+        channel = bot.get_channel(1349463744278691870)
+    else:
+        pass
+    
+    await channel.send(f"{bot.user.name} is now logged in.")
     print(f"Logged in as {bot.user}")
 
 @bot.before_invoke
