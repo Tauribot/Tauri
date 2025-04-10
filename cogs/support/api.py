@@ -7,13 +7,14 @@ import pymongo
 import os
 from pymongo.errors import ConnectionFailure
 from fastapi.responses import RedirectResponse
-from linked_roles import LinkedRolesOAuth2, RoleConnection
+from linked_roles import LinkedRolesOAuth2, RoleConnection, RoleMetadataType, RoleMetadataRecord
 from internal.universal.staff import has_role
 
 client = LinkedRolesOAuth2(
     client_id='1349452382924443819',
     client_secret='2-zS_ejdJCvVH82OKtG48deHqNM9sCFx',
     redirect_uri='https://staff.tauribot.xyz/verified-role',
+    token=os.getenv("token"),
     scopes=('role_connections.write', 'identify'),
 )
 
@@ -60,6 +61,26 @@ class API(commands.Cog):
             await user.edit_role_connection(role)
         
         return 'Role metadata set successfully. Please check your Discord profile.'
+    
+    @commands.hybrid_command(
+        name='setup-linked-role',
+        description='Setup the linked role for the bot',
+        aliases=['slr']
+    )
+    @commands.is_owner()
+    async def setup_linked_role(self, ctx):
+        records = (
+            RoleMetadataRecord(
+                key='is_staff',
+                value=True,
+                type=RoleMetadataType.BOOLEAN
+            )
+        )
+        
+        async with client:
+            registered_records = await client.register_role_metadata(records=records, force=True)
+            
+        await ctx.send(f'Registered role metadata successfully. {registered_records}')
 
 async def setup(bot):
     await bot.add_cog(API(bot))
