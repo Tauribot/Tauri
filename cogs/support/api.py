@@ -92,7 +92,7 @@ async def verified_role(request: Request, code: str):
             role_connection = RoleConnection(platform_name='Tauri Staff', platform_username=str(user))
 
         # Update metadata
-        role_connection.add_metadata(key='is_staff', value=1 if is_staff_member else 0)
+        role_connection.add_metadata(key='is_staff', value=True if is_staff_member else False)
         await user.edit_role_connection(role_connection)
     except Exception as e:
         print(f"Error updating role connection for {user.id}: {e}")
