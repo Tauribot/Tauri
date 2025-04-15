@@ -45,7 +45,7 @@ class DevCommands(commands.Cog):
         embed.set_thumbnail(url=ctx.bot.user.display_avatar.url)
         
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="Support Server", style=discord.ButtonStyle.link, url="https://discord.gg/VVBDc3RAqC"))
+        view.add_item(discord.ui.Button(label="Support Server", style=discord.ButtonStyle.link, url="https://discord.gg/4xzsPbNhMb"))
         view.add_item(discord.ui.Button(label="Documentation", style=discord.ButtonStyle.link, url="https://docs.tauribot.xyz"))
         
         await ctx.send(embed=embed, view=view)
