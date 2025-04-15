@@ -26,7 +26,8 @@ class ConfirmLinkView(discord.ui.View):
         
         # If relinking, remove the old account first
         if self.is_relink:
-            self.bot.db.verifications.delete_one({"discord": self.ctx.author.id})
+            discord_id = int(self.ctx.author.id)
+            self.bot.db.verifications.delete_one({"discord": discord_id})
             
         # Update embed to show linking in progress
         embed = discord.Embed(
@@ -49,7 +50,13 @@ class ConfirmLinkView(discord.ui.View):
         
         while attempts < maxattempt:
             try:
-                linked_data = self.bot.db.verifications.find_one({"discord": self.ctx.author.id})
+                # Force integer ID for consistent database lookup
+                discord_id = int(self.ctx.author.id)
+                linked_data = self.bot.db.verifications.find_one({"discord": discord_id})
+                
+                # Debug print to check if it finds anything
+                print(f"Checking for discord ID: {discord_id}, Found: {linked_data is not None}")
+                
                 if linked_data:
                     client = roblox.Client()
                     user = await client.get_user(linked_data["roblox"])
@@ -65,6 +72,7 @@ class ConfirmLinkView(discord.ui.View):
                     )
                     verified.set_thumbnail(url=thumbnail[0].image_url)
                     await self.message.edit(embed=verified, view=None)
+                    self.stop()  # Stop the view once linked
                     break
                 await asyncio.sleep(1)
                 attempts += 1
@@ -115,7 +123,8 @@ class Roblox(commands.Cog):
         await ctx.defer()
         
         # Check if the user has already linked their Roblox account
-        linked_data = self.bot.db.verifications.find_one({"discord": ctx.author.id})
+        discord_id = int(ctx.author.id)
+        linked_data = self.bot.db.verifications.find_one({"discord": discord_id})
         
         if linked_data:
             # User already has a linked account
