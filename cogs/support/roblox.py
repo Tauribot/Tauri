@@ -54,10 +54,17 @@ class ConfirmLinkView(discord.ui.View):
                 discord_id = int(self.ctx.author.id)
                 linked_data = self.bot.db.verifications.find_one({"discord": discord_id})
                 
+                # Try string ID as fallback
+                if not linked_data:
+                    linked_data = self.bot.db.verifications.find_one({"discord": str(discord_id)})
+                    if linked_data:
+                        print(f"Found using string ID instead of int: {discord_id}")
+                
                 # Debug print to check if it finds anything
                 print(f"Checking for discord ID: {discord_id}, Found: {linked_data is not None}")
                 
                 if linked_data:
+                    print(f"Found data: {linked_data}")
                     client = roblox.Client()
                     user = await client.get_user(linked_data["roblox"])
                     thumbnail = await client.thumbnails.get_user_avatar_thumbnails(
