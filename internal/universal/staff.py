@@ -17,7 +17,10 @@ staffroleid = [
 
 async def has_role(bot, user):
     guild = await bot.fetch_guild(os.getenv("support_id"))
-    member = await guild.fetch_member(user.id)
+    try:    
+        member = await guild.fetch_member(user.id)
+    except Exception as e:
+        return []
     filtered = []
     if member:
         for role in member.roles:
