@@ -41,11 +41,13 @@ async def on_ready():
     await bot.change_presence(status=discord.Status.idle)
     if os.getenv("environment") == "production":
         channel = bot.get_channel(1359904061851177141)
+        await channel.send(f"{bot.user.name} is now logged in.")
+        print(f"Logged in as {bot.user}")
     else:
-        pass
+        print(f"Logged in as {bot.user}")
     
-    await channel.send(f"{bot.user.name} is now logged in.")
-    print(f"Logged in as {bot.user}")
+    
+    
 
 @bot.before_invoke
 async def before_invoke(ctx):
