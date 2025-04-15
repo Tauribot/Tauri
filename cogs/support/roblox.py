@@ -86,7 +86,9 @@ class Roblox(commands.Cog):
             
         await link_roblox(self.bot, ctx, ctx.author.id)
         return
-            
+        
+async def setup(bot):
+    await bot.add_cog(Roblox(bot))
             
         
         
