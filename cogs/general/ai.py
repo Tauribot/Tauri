@@ -9,6 +9,69 @@ import asyncio
 import typing
 import uuid
 from internal.universal.premium import isPremium
+import json
+
+async def moderation(client, message):
+    try:
+        response = client.moderations.create(
+            input=message,
+            model="omni-moderation-latest"
+        )
+    except Exception as e:
+        print(e)
+        return
+        
+    flaggedfor = []
+    categories = []
+                
+        # Check categories and their scores
+    categories = response.results[0].categories        
+    category_scores = response.results[0].category_scores
+    threshold = 0.85
+
+    flaggedfor = []
+        
+        # Check categories and flag the message if any category is flagged        
+    if categories.sexual and category_scores.sexual >= threshold:
+        flaggedfor.append(f"Sexual: {category_scores.sexual}")
+
+    if categories.sexual_minors and category_scores.sexual_minors >= threshold:
+        flaggedfor.append(f"Sexual Minors: {category_scores.sexual_minors}")
+
+    if categories.harassment and category_scores.harassment >= threshold:
+        flaggedfor.append(f"Harassment: {category_scores.harassment}")
+
+    if categories.harassment_threatening and category_scores.harassment_threatening >= threshold:
+        flaggedfor.append(f"Harassment Threatening: {category_scores.harassment_threatening}")
+
+    if categories.hate and category_scores.hate >= threshold:
+        flaggedfor.append(f"Hate: {category_scores.hate}")
+
+    if categories.hate_threatening and category_scores.hate_threatening >= threshold:
+        flaggedfor.append(f"Hate Threatening: {category_scores.hate_threatening}")
+
+    if categories.illicit and category_scores.illicit >= threshold:
+        flaggedfor.append(f"Illicit: {category_scores.illicit}")
+
+    if categories.illicit_violent and category_scores.illicit_violent >= threshold:
+        flaggedfor.append(f"Illicit Violent: {category_scores.illicit_violent}")
+
+    if categories.self_harm and category_scores.self_harm >= threshold:
+        flaggedfor.append(f"Self Harm: {category_scores.self_harm}")
+
+    if categories.self_harm_intent and category_scores.self_harm_intent >= threshold:
+        flaggedfor.append(f"Self Harm Intent: {category_scores.self_harm_intent}")
+
+    if categories.self_harm_instructions and category_scores.self_harm_instructions >= threshold:
+        flaggedfor.append(f"Self Harm Instructions: {category_scores.self_harm_instructions}")
+
+    if categories.violence and category_scores.violence >= threshold:
+        flaggedfor.append(f"Violence: {category_scores.violence}")
+
+    if categories.violence_graphic and category_scores.violence_graphic >= threshold:
+        flaggedfor.append(f"Violence Graphic: {category_scores.violence_graphic}")
+    
+    return flaggedfor
 
 class aichannel(commands.Cog):
     def __init__(self, bot):
@@ -212,8 +275,8 @@ class aichannel(commands.Cog):
                     ],
                 )
 
-                await message.reply(response.choices[0].message.content)
-
+                await message.reply(response.choices[0].message.content)     
+                     
 
 async def setup(bot):
     await bot.add_cog(aichannel(bot))

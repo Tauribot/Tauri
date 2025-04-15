@@ -6,6 +6,7 @@ from internal.universal.staff import staffroleid
 import time
 import os
 import asyncio
+import openai
 
 
 class DevCommands(commands.Cog):

@@ -217,5 +217,8 @@ class API(commands.Cog):
 
 async def setup(bot):
     """Adds the API cog to the bot."""
-    await bot.add_cog(API(bot))
-    print("API Cog added to bot.")
+    if os.getenv("environment") == "production":
+        await bot.add_cog(API(bot))
+        print("API Cog added to bot.")
+    else:
+        raise Exception("API Cog not added to bot.")
