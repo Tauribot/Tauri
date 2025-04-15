@@ -50,8 +50,6 @@ class DevCommands(commands.Cog):
         
         await ctx.send(embed=embed, view=view)
         
-        
-        
     ## Team Commands ##
 
     @commands.hybrid_command(
