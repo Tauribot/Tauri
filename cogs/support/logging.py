@@ -1,12 +1,25 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 import os
 import sentry_sdk
+import requests
 
 class logs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.heartbeat.start()
+        self.link = "https://sm.hetrixtools.net/hb/?s=e7905883851df790e2ff23c073c267bd"
+    
+    
+    @tasks.loop(seconds=60)
+    async def heartbeat(self):
+        try:
+            requests.get(self.link, timeout=10)
+        except Exception as e:
+            print(f"Failed to send heartbeat: {e}")
+        
+        
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
