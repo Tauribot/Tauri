@@ -30,10 +30,10 @@ app.add_middleware(
 )
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory="./app/static"), name="static")
 
 # Initialize templates
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory="./app/templates")
 
 # OAuth2 configuration
 DISCORD_CLIENT_ID = os.getenv("client_id")
