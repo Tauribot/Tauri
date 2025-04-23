@@ -11,18 +11,10 @@ from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from linked_roles import LinkedRolesOAuth2, OAuth2Scopes
+from starlette.middleware.sessions import SessionMiddleware
 from internal.universal.staff import has_role
 from internal.universal.premium import isPremium
-
-# Initialize OAuth2 client
-client = LinkedRolesOAuth2(
-    client_id=os.getenv("client_id"),
-    client_secret=os.getenv("client_secret"),
-    redirect_uri='https://admin.tauribot.xyz/callback',
-    token=os.getenv("token"),
-    scopes=(OAuth2Scopes.identify, OAuth2Scopes.guilds),
-)
+import urllib.parse
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -31,14 +23,25 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Add session middleware
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("session_secret", "your-secret-key")
+)
+
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Initialize templates
 templates = Jinja2Templates(directory="app/templates")
 
-# OAuth2 scheme
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# OAuth2 configuration
+DISCORD_CLIENT_ID = os.getenv("client_id")
+DISCORD_CLIENT_SECRET = os.getenv("client_secret")
+DISCORD_REDIRECT_URI = "https://admin.tauribot.xyz/callback"
+DISCORD_API_ENDPOINT = "https://discord.com/api/v10"
+DISCORD_TOKEN_URL = f"{DISCORD_API_ENDPOINT}/oauth2/token"
+DISCORD_USER_URL = f"{DISCORD_API_ENDPOINT}/users/@me"
 
 # Admin routes
 @app.get("/", response_class=HTMLResponse)
@@ -47,34 +50,62 @@ async def home(request: Request):
 
 @app.get("/login")
 async def login():
-    url = client.get_oauth_url()
+    params = {
+        "client_id": DISCORD_CLIENT_ID,
+        "redirect_uri": DISCORD_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "identify guilds"
+    }
+    url = f"{DISCORD_API_ENDPOINT}/oauth2/authorize?{urllib.parse.urlencode(params)}"
     return RedirectResponse(url=url)
 
 @app.get("/callback")
 async def callback(request: Request, code: str):
     try:
-        token = await client.get_access_token(code)
-        user = await client.fetch_user(token)
+        # Exchange code for token
+        data = {
+            "client_id": DISCORD_CLIENT_ID,
+            "client_secret": DISCORD_CLIENT_SECRET,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": DISCORD_REDIRECT_URI
+        }
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(DISCORD_TOKEN_URL, data=data, headers=headers) as resp:
+                if resp.status != 200:
+                    raise HTTPException(status_code=400, detail="Failed to get access token")
+                token_data = await resp.json()
+                
+            # Get user info
+            headers = {
+                "Authorization": f"Bearer {token_data['access_token']}"
+            }
+            async with session.get(DISCORD_USER_URL, headers=headers) as resp:
+                if resp.status != 200:
+                    raise HTTPException(status_code=400, detail="Failed to get user info")
+                user_data = await resp.json()
+                
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to process OAuth callback")
-
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
 
     # Check if user is admin
     bot = request.app.state.bot
     if not bot:
         raise HTTPException(status_code=500, detail="Internal server configuration error")
 
-    is_admin = await has_role(bot, user)
+    is_admin = await has_role(bot, user_data)
     if not is_admin:
         raise HTTPException(status_code=403, detail="Not authorized")
 
     # Store user session
     request.session["user"] = {
-        "id": user.id,
-        "username": user.name,
-        "avatar": user.avatar.url if user.avatar else None
+        "id": user_data["id"],
+        "username": user_data["username"],
+        "avatar": f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png" if user_data.get("avatar") else None
     }
 
     return RedirectResponse(url="/dashboard")
