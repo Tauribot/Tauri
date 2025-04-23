@@ -32,10 +32,10 @@ app = FastAPI(
 )
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Initialize templates
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -199,4 +199,6 @@ class AdminPanel(commands.Cog):
         await server.serve()
 
 async def setup(bot):
-    await bot.add_cog(AdminPanel(bot)) 
+    if os.getenv("env") == "development":
+        raise commands.CommandError("Admin panel is not available in development mode")
+    await bot.add_cog(AdminPanel(bot))  
