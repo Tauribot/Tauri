@@ -71,8 +71,8 @@ class Utilities(commands.Cog):
 
         view = RoleToggleView(roles)
 
-        await ctx.send(embed=embed, view=view)
-        await ctx.respond("Embed sent", ephemeral=True)
+        await ctx.channel.send(embed=embed, view=view)
+        await ctx.send("Embed sent", ephemeral=True)
 
     @commands.Cog.listener()
     async def on_ready(self):
