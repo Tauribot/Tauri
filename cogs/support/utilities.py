@@ -4,9 +4,6 @@ from discord import app_commands
 
 tauriServerId = 1242439573254963292
 
-# Change all of this to your liking. Kept it pretty simple for now but I will improve it over time.
-# Also, don't question the code. If it works it works.
-
 class RoleToggleButton(discord.ui.Button):
     def __init__(self, role: discord.Role):
         super().__init__(label=role.name, style=discord.ButtonStyle.secondary)
@@ -74,10 +71,8 @@ class Utilities(commands.Cog):
 
         view = RoleToggleView(roles)
 
-        if isinstance(ctx, commands.Context):
-            await ctx.send(embed=embed, view=view)
-        else:
-            await ctx.interaction.response.send_message(embed=embed, view=view)
+        await ctx.send(embed=embed, view=view)
+        await ctx.respond("Embed sent", ephemeral=True)
 
     @commands.Cog.listener()
     async def on_ready(self):
