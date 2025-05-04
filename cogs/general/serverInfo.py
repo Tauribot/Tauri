@@ -58,11 +58,11 @@ class SettingsDropdown(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         choice = self.values[0]
         cfg = self.bot.db.guildConfigs.find_one({"_id": self.guild_id}) or defaultConfig.copy()
-
+        defaultConfig = defaultConfig.copy()
         if choice == "skip":
             self.bot.db.guildConfigs.update_one(
                 {"_id": self.guild_id},
-                {"$set": {"configured": True, "hasChanges": False}},
+                {"$set": {**defaultConfig, "configured": True, "hasChanges": False}},
                 upsert=True
             )
             return await interaction.response.edit_message(
@@ -85,19 +85,20 @@ class SettingsDropdown(discord.ui.Select):
                     view=None
                 )
             else:
-                basic = defaultConfig.copy()
-                basic["configured"] = True
-                basic["hasChanges"] = False
-                self.bot.db.guildConfigs.update_one(
-                    {"_id": self.guild_id},
-                    {"$set": basic},
-                    upsert=True
-                )
-                return await interaction.response.edit_message(
-                    content="No changes were made. I have automatically applied the basic config.",
-                    embed=None,
-                    view=None
-                )
+                if not rec.get("configured", False):
+                    basic = defaultConfig.copy()
+                    basic["configured"] = True
+                    basic["hasChanges"] = False
+                    self.bot.db.guildConfigs.update_one(
+                        {"_id": self.guild_id},
+                        {"$set": basic},
+                        upsert=True
+                    )
+                    return await interaction.response.edit_message(
+                        content="No changes were made. I have automatically applied the basic config.",
+                        embed=None,
+                        view=None
+                    )
 
         if choice == "appearance":
             view = discord.ui.View(timeout=300)
