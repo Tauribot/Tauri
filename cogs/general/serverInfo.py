@@ -29,11 +29,10 @@ defaultConfig = {
     "showLogo": True,
     "showBanner": False,
     "showRoles": True,
-    "configured": False, # !!!! Do not set to True !!!!
+    "configured": False,  # !!!! Do not set to True !!!!
     "embedColor": None,
-    "hasChanges": False # !!!! Do not set to True !!!!
+    "hasChanges": False  # !!!! Do not set to True !!!!
 }
-
 
 class SettingsDropdown(discord.ui.Select):
     def __init__(self, bot, guild_id, configured: bool):
@@ -49,21 +48,20 @@ class SettingsDropdown(discord.ui.Select):
         ]
 
         super().__init__(
-            placeholder="Choose settings category…",
+            placeholder="Choose settings category...",
             min_values=1,
             max_values=1,
             options=options
         )
 
-    async def callback(self, bot, guild_id, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction):
         choice = self.values[0]
         cfg = self.bot.db.guildConfigs.find_one({"_id": self.guild_id}) or defaultConfig.copy()
 
         if choice == "skip":
-            defaultConfig = defaultConfig.copy()
             self.bot.db.guildConfigs.update_one(
                 {"_id": self.guild_id},
-                {"$set": {**defaultConfig, "configured": True, "hasChanges": False}},
+                {"$set": {"configured": True, "hasChanges": False}},
                 upsert=True
             )
             return await interaction.response.edit_message(
@@ -75,10 +73,9 @@ class SettingsDropdown(discord.ui.Select):
         if choice == "finish":
             rec = self.bot.db.guildConfigs.find_one({"_id": self.guild_id})
             if rec.get("hasChanges", False):
-                cfg = bot.db.guildConfigs.find_one({"_id": guild_id}) or defaultConfig.copy()
                 self.bot.db.guildConfigs.update_one(
                     {"_id": self.guild_id},
-                    {"$set": {**cfg, "hasChanges": False}},
+                    {"$set": {"hasChanges": False}},
                     upsert=True
                 )
                 return await interaction.response.edit_message(
@@ -87,20 +84,19 @@ class SettingsDropdown(discord.ui.Select):
                     view=None
                 )
             else:
-                if not rec.get("configured", False):
-                    basic = defaultConfig.copy()
-                    basic["configured"] = True
-                    basic["hasChanges"] = False
-                    self.bot.db.guildConfigs.update_one(
-                        {"_id": self.guild_id},
-                        {"$set": basic},
-                        upsert=True
-                    )
-                    return await interaction.response.edit_message(
-                        content="No changes were made. I have automatically applied the basic config.",
-                        embed=None,
-                        view=None
-                    )
+                basic = defaultConfig.copy()
+                basic["configured"] = True
+                basic["hasChanges"] = False
+                self.bot.db.guildConfigs.update_one(
+                    {"_id": self.guild_id},
+                    {"$set": basic},
+                    upsert=True
+                )
+                return await interaction.response.edit_message(
+                    content="No changes were made. Basic configuration applied.",
+                    embed=None,
+                    view=None
+                )
 
         if choice == "appearance":
             view = discord.ui.View(timeout=300)
@@ -108,7 +104,6 @@ class SettingsDropdown(discord.ui.Select):
             view.add_item(ColorButton(self.bot, self.guild_id))
             view.add_item(ToggleLogo(self.bot, self.guild_id))
             view.add_item(ToggleBanner(self.bot, self.guild_id))
-
         else:
             view = discord.ui.View(timeout=300)
             for key, label in infoFields.items():
@@ -120,11 +115,11 @@ class SettingsDropdown(discord.ui.Select):
         settingsSelect = discord.Embed(
             title="Settings",
             description=(
-                "Use the menu below to configure the server info display to your liking. If any errors occur, contact Tauri support in our Discord server with the /help command."
+                "Use the menu below to configure the server info display to your liking. "
+                "If any errors occur, contact Tauri support in our Discord server with the /help command."
             ),
             color=cfg.get("embedColor") if cfg.get("embedColor") else None
         )
-
         await interaction.response.edit_message(content=None, embed=settingsSelect, view=view)
 
 class SettingsView(discord.ui.View):
@@ -397,7 +392,7 @@ class ServerInfo(commands.Cog):
             hidden = len(filtered) - len(shown)
             mentions = [r.mention for r in shown]
             if hidden > 0:
-                mentions.append(f"and {hidden} more…")
+                mentions.append(f"and {hidden} more...")
             embed.add_field(name="Roles", value=" ".join(mentions), inline=False)
 
         view = None
