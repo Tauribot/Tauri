@@ -35,15 +35,17 @@ defaultConfig = {
 }
 
 class SettingsDropdown(discord.ui.Select):
-    def __init__(self, bot, guild_id, configured: bool):
+    def __init__(self, bot, guild_id, configured: bool, user_id: int):
         self.bot = bot
         self.guild_id = guild_id
         self.configured = configured
+        self.user_id = user_id
 
         options = [
             discord.SelectOption(label="Appearance", value="appearance"),
             discord.SelectOption(label="Content", value="content"),
-            discord.SelectOption(label="Skip Config" if not configured else "Reset to Default", value="skip"),
+            discord.SelectOption(label="Reset to Default" if configured else "Skip Config", 
+                            value="reset" if configured else "skip"),
             discord.SelectOption(label="Finish", value="finish")
         ]
 
@@ -54,11 +56,32 @@ class SettingsDropdown(discord.ui.Select):
             options=options
         )
 
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This configuration menu is not for you.", ephemeral=True)
+            return False
+        return True
+
     async def callback(self, interaction: discord.Interaction):
+        if not await self.interaction_check(interaction):
+            return
+
         choice = self.values[0]
         cfg = self.bot.db.guildConfigs.find_one({"_id": self.guild_id}) or defaultConfig.copy()
 
         if choice == "skip":
+            self.bot.db.guildConfigs.update_one(
+                {"_id": self.guild_id},
+                {"$set": {"configured": True, "hasChanges": False}},
+                upsert=True
+            )
+            return await interaction.response.edit_message(
+                content="You have skipped the configuration. Basic settings applied.",
+                embed=None,
+                view=None
+            )
+        
+        if choice == "reset":
             new_config = defaultConfig.copy()
             new_config.update({
                 "configured": True,
@@ -69,53 +92,68 @@ class SettingsDropdown(discord.ui.Select):
                 {"$set": new_config},
                 upsert=True
             )
+            view = SettingsView(self.bot, self.guild_id, new_config, self.user_id)
+            reset_embed = discord.Embed(
+                title="Settings Reset",
+                description="All settings have been reset to defaults.",
+                color=new_config.get("embedColor")
+            )
             return await interaction.response.edit_message(
-                content="Default configuration applied. You can now use /serverinfo.",
-                embed=None,
+                content=None,
+                embed=reset_embed,
                 view=None
             )
 
         if choice == "finish":
-            current_config = self.bot.db.guildConfigs.find_one({"_id": self.guild_id}) or defaultConfig.copy()
-            
-            if current_config.get("hasChanges", False):
+            rec = self.bot.db.guildConfigs.find_one({"_id": self.guild_id})
+            if rec.get("hasChanges", False):
                 self.bot.db.guildConfigs.update_one(
                     {"_id": self.guild_id},
-                    {"$set": {"hasChanges": False, "configured": True}},
+                    {"$set": {"hasChanges": False}},
                     upsert=True
                 )
                 return await interaction.response.edit_message(
-                    content="Your changes have been saved!",
+                    content="Your changes have been saved successfully.",
+                    embed=None,
+                    view=None
+                )
+            elif rec.get("configured", True) and not rec.get("hasChanges", False):
+                return await interaction.response.edit_message(
+                    content="No changes were made. Configuration closed.",
+                    ephemeral=True,
                     embed=None,
                     view=None
                 )
             else:
-                new_config = defaultConfig.copy()
-                new_config["configured"] = True
-                self.bot.db.guildConfigs.update_one(
-                    {"_id": self.guild_id},
-                    {"$set": new_config},
-                    upsert=True
-                )
-                return await interaction.response.edit_message(
-                    content="Default configuration applied since no changes were made.",
-                    embed=None,
-                    view=None
-                )
-
+                if not rec.get("configured", False):
+                    basic = defaultConfig.copy()
+                    basic["configured"] = True
+                    basic["hasChanges"] = False
+                    self.bot.db.guildConfigs.update_one(
+                        {"_id": self.guild_id},
+                        {"$set": basic},
+                        upsert=True
+                    )
+                    return await interaction.response.edit_message(
+                        content="No changes were made. Basic configuration applied.",
+                        embed=None,
+                        view=None
+                    )
+                return await interaction.response.edit_message(content=None, embed=None, view=None)
+            
         if choice == "appearance":
             view = discord.ui.View(timeout=300)
-            view.add_item(BackButton(self.bot, self.guild_id))
-            view.add_item(ColorButton(self.bot, self.guild_id))
-            view.add_item(ToggleLogo(self.bot, self.guild_id))
-            view.add_item(ToggleBanner(self.bot, self.guild_id))
+            view.add_item(BackButton(self.bot, self.guild_id, self.user_id))
+            view.add_item(ColorButton(self.bot, self.guild_id, self.user_id))
+            view.add_item(ToggleLogo(self.bot, self.guild_id, self.user_id))
+            view.add_item(ToggleBanner(self.bot, self.guild_id, self.user_id))
         else:
             view = discord.ui.View(timeout=300)
             for key, label in infoFields.items():
-                view.add_item(ToggleField(self.bot, self.guild_id, key, label))
-            view.add_item(ToggleField(self.bot, self.guild_id, "showRoles", "Display Roles"))
-            view.add_item(ResetButton(self.bot, self.guild_id))
-            view.add_item(BackButton(self.bot, self.guild_id))
+                view.add_item(ToggleField(self.bot, self.guild_id, key, label, self.user_id))
+            view.add_item(ToggleField(self.bot, self.guild_id, "showRoles", "Display Roles", self.user_id))
+            view.add_item(ResetButton(self.bot, self.guild_id, self.user_id))
+            view.add_item(BackButton(self.bot, self.guild_id, self.user_id))
 
         settingsSelect = discord.Embed(
             title="Settings",
@@ -128,25 +166,51 @@ class SettingsDropdown(discord.ui.Select):
         await interaction.response.edit_message(content=None, embed=settingsSelect, view=view)
 
 class SettingsView(discord.ui.View):
-    def __init__(self, bot: commands.Bot, guild_id: int, current_config: dict):
+    def __init__(self, bot: commands.Bot, guild_id: int, current_config: dict, user_id: int):
         super().__init__(timeout=300)
-        self.add_item(SettingsDropdown(bot, guild_id, current_config.get("configured", False)))
+        self.user_id = user_id
+        self.add_item(SettingsDropdown(bot, guild_id, current_config.get("configured", False), user_id))
         
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This configuration menu is not for you.", ephemeral=True)
+            return False
+        return True
+
 class ColorButton(discord.ui.Button):
-    def __init__(self, bot, guild_id):
+    def __init__(self, bot, guild_id, user_id: int):
         super().__init__(label="Set Color", style=discord.ButtonStyle.primary)
         self.bot = bot
         self.guild_id = guild_id
+        self.user_id = user_id
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This button is not for you.", ephemeral=True)
+            return False
+        return True
 
     async def callback(self, interaction: discord.Interaction):
+        if not await self.interaction_check(interaction):
+            return
         await interaction.response.send_modal(ColorModal(self.bot, self.guild_id))
+
 class ConfirmButton(discord.ui.Button):
-    def __init__(self, bot, guild_id):
+    def __init__(self, bot, guild_id, user_id: int):
         super().__init__(label="Finish", style=discord.ButtonStyle.success)
         self.bot = bot
         self.guild_id = guild_id
+        self.user_id = user_id
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This button is not for you.", ephemeral=True)
+            return False
+        return True
 
     async def callback(self, interaction: discord.Interaction):
+        if not await self.interaction_check(interaction):
+            return
         self.bot.db.guildConfigs.update_one(
             {"_id": self.guild_id},
             {"$set": {"configured": True, "hasChanges": False}},
@@ -159,14 +223,23 @@ class ConfirmButton(discord.ui.Button):
         )
 
 class ConfigureButton(discord.ui.Button):
-    def __init__(self, bot, guild_id):
+    def __init__(self, bot, guild_id, user_id: int):
         super().__init__(label="Configure", style=discord.ButtonStyle.blurple)
         self.bot = bot
         self.guild_id = guild_id
+        self.user_id = user_id
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This button is not for you.", ephemeral=True)
+            return False
+        return True
 
     async def callback(self, interaction: discord.Interaction):
+        if not await self.interaction_check(interaction):
+            return
         cfg = self.bot.db.guildConfigs.find_one({"_id": self.guild_id}) or defaultConfig.copy()
-        view = SettingsView(self.bot, self.guild_id, cfg)
+        view = SettingsView(self.bot, self.guild_id, cfg, self.user_id)
         settingsSelect = discord.Embed(
             title="Settings",
             description=(
@@ -230,12 +303,21 @@ class ColorModal(discord.ui.Modal):
             )
 
 class ToggleLogo(discord.ui.Button):
-    def __init__(self, bot, guild_id):
+    def __init__(self, bot, guild_id, user_id: int):
         super().__init__(label="Toggle Server Logo", style=discord.ButtonStyle.secondary)
         self.bot = bot
         self.guild_id = guild_id
+        self.user_id = user_id
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This button is not for you.", ephemeral=True)
+            return False
+        return True
 
     async def callback(self, interaction: discord.Interaction):
+        if not await self.interaction_check(interaction):
+            return
         cfg = self.bot.db.guildConfigs.find_one({"_id": self.guild_id}) or {}
         cfg["showLogo"] = not cfg.get("showLogo", True)
         cfg["configured"] = True
@@ -248,12 +330,21 @@ class ToggleLogo(discord.ui.Button):
         )
 
 class ToggleBanner(discord.ui.Button):
-    def __init__(self, bot, guild_id):
+    def __init__(self, bot, guild_id, user_id: int):
         super().__init__(label="Toggle Server Banner", style=discord.ButtonStyle.secondary)
         self.bot = bot
         self.guild_id = guild_id
+        self.user_id = user_id
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This button is not for you.", ephemeral=True)
+            return False
+        return True
 
     async def callback(self, interaction: discord.Interaction):
+        if not await self.interaction_check(interaction):
+            return
         guild = interaction.guild
         if not guild or not guild.banner:
             return await interaction.response.send_message("No banner available.", ephemeral=True)
@@ -269,7 +360,7 @@ class ToggleBanner(discord.ui.Button):
         )
 
 class ToggleField(discord.ui.Button):
-    def __init__(self, bot, guild_id, config_key: str, label: str):
+    def __init__(self, bot, guild_id, config_key: str, label: str, user_id: int):
         cfg = bot.db.guildConfigs.find_one({"_id": guild_id}) or defaultConfig.copy()
         current = cfg.get(config_key, True)
         super().__init__(
@@ -279,8 +370,17 @@ class ToggleField(discord.ui.Button):
         self.bot = bot
         self.guild_id = guild_id
         self.config_key = config_key
+        self.user_id = user_id
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This button is not for you.", ephemeral=True)
+            return False
+        return True
 
     async def callback(self, interaction: discord.Interaction):
+        if not await self.interaction_check(interaction):
+            return
         cfg = self.bot.db.guildConfigs.find_one({"_id": self.guild_id}) or defaultConfig.copy()
         new_val = not cfg.get(self.config_key, True)
         self.bot.db.guildConfigs.update_one(
@@ -293,38 +393,93 @@ class ToggleField(discord.ui.Button):
             upsert=True
         )
         view = discord.ui.View(timeout=300)
+
         for key, label in infoFields.items():
-            view.add_item(ToggleField(self.bot, self.guild_id, key, label))
-        view.add_item(ToggleField(self.bot, self.guild_id, "showRoles", "Display Roles"))
-        view.add_item(ResetButton(self.bot, self.guild_id))
-        view.add_item(BackButton(self.bot, self.guild_id))
-        await interaction.response.edit_message(content="Content Settings:", embed=None, view=view)
+            view.add_item(ToggleField(self.bot, self.guild_id, key, label, self.user_id))
+        view.add_item(ToggleField(self.bot, self.guild_id, "showRoles", "Display Roles", self.user_id))
+        view.add_item(ResetButton(self.bot, self.guild_id, self.user_id))
+        view.add_item(BackButton(self.bot, self.guild_id, self.user_id))
+        settingsSelect = discord.Embed(
+            title="Settings",
+            description=(
+                "Use the menu below to configure the server info display to your liking. If any errors occur, contact Tauri support in our Discord server with the /help command."
+            ),
+            color=cfg.get("embedColor") if cfg.get("embedColor") else None
+        )
+        await interaction.response.edit_message(content=None, embed=settingsSelect, view=view)
 
 class ResetButton(discord.ui.Button):
-    def __init__(self, bot, guild_id):
+    def __init__(self, bot, guild_id, user_id: int):
         super().__init__(label="Reset to Defaults", style=discord.ButtonStyle.danger)
         self.bot = bot
         self.guild_id = guild_id
+        self.user_id = user_id
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This button is not for you.", ephemeral=True)
+            return False
+        return True
 
     async def callback(self, interaction: discord.Interaction):
-        basic = defaultConfig.copy()
-        basic["configured"] = False
-        basic["hasChanges"] = False
-        self.bot.db.guildConfigs.update_one(
-            {"_id": self.guild_id}, {"$set": basic}, upsert=True
-        )
-        view = SettingsView(self.bot, self.guild_id, basic)
-        await interaction.response.edit_message(content="Settings reset to defaults.", embed=None, view=None, ephemeral=True)
+        if not await self.interaction_check(interaction):
+            return
+        try:
+            await interaction.response.defer(ephemeral=True)
+            
+            new_config = defaultConfig.copy()
+            new_config.update({
+                "configured": True,
+                "hasChanges": False,
+            })
+            
+            self.bot.db.guildConfigs.update_one(
+                {"_id": self.guild_id},
+                {"$set": new_config},
+                upsert=True
+            )
+            
+            view = SettingsView(self.bot, self.guild_id, new_config, self.user_id)
+            
+            reset_embed = discord.Embed(
+                title="Settings Reset",
+                description="All settings have been reset to defaults.",
+                color=new_config.get("embedColor")
+            )
+            
+            await interaction.followup.edit_message(
+                message_id=interaction.message.id,
+                content=None,
+                embed=reset_embed,
+                view=None
+            )
+            
+        except Exception as e:
+            print(f"[Reset Error] {type(e).__name__}: {e}")
+            error_msg = "Failed to reset settings. Please try again."
+            if interaction.response.is_done():
+                await interaction.followup.send(error_msg, ephemeral=True)
+            else:
+                await interaction.response.send_message(error_msg, ephemeral=True)
 
 class BackButton(discord.ui.Button):
-    def __init__(self, bot, guild_id):
+    def __init__(self, bot, guild_id, user_id: int):
         super().__init__(label="Back", style=discord.ButtonStyle.secondary)
         self.bot = bot
         self.guild_id = guild_id
+        self.user_id = user_id
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This button is not for you.", ephemeral=True)
+            return False
+        return True
 
     async def callback(self, interaction: discord.Interaction):
+        if not await self.interaction_check(interaction):
+            return
         cfg = self.bot.db.guildConfigs.find_one({"_id": self.guild_id}) or defaultConfig.copy()
-        view = SettingsView(self.bot, self.guild_id, cfg)
+        view = SettingsView(self.bot, self.guild_id, cfg, self.user_id)
         settingsSelect = discord.Embed(
             title="Settings",
             description=(
@@ -344,8 +499,8 @@ class ServerInfo(commands.Cog):
     async def serverinfo(self, ctx: commands.Context):
         cfg = self.bot.db.guildConfigs.find_one({"_id": ctx.guild.id}) or defaultConfig.copy()
 
-        if not cfg.get("configured", False) and ctx.author.guild_permissions.manage_guild:
-            view = SettingsView(self.bot, ctx.guild.id, cfg)
+        if not cfg.get("configured") and ctx.author.guild_permissions.manage_guild:
+            view = SettingsView(self.bot, ctx.guild.id, cfg, ctx.author.id)
             embed = discord.Embed(
                 title="Server Information Setup Required",
                 description=(
@@ -403,7 +558,7 @@ class ServerInfo(commands.Cog):
         view = None
         if ctx.author.guild_permissions.manage_guild:
             view = discord.ui.View()
-            view.add_item(ConfigureButton(self.bot, ctx.guild.id))
+            view.add_item(ConfigureButton(self.bot, ctx.guild.id, ctx.author.id))
 
         await ctx.send(embed=embed, view=view)
 
