@@ -55,11 +55,12 @@ class SettingsDropdown(discord.ui.Select):
             options=options
         )
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, bot, guild_id, interaction: discord.Interaction):
         choice = self.values[0]
         cfg = self.bot.db.guildConfigs.find_one({"_id": self.guild_id}) or defaultConfig.copy()
-        defaultConfig = defaultConfig.copy()
+
         if choice == "skip":
+            defaultConfig = defaultConfig.copy()
             self.bot.db.guildConfigs.update_one(
                 {"_id": self.guild_id},
                 {"$set": {**defaultConfig, "configured": True, "hasChanges": False}},
@@ -74,9 +75,10 @@ class SettingsDropdown(discord.ui.Select):
         if choice == "finish":
             rec = self.bot.db.guildConfigs.find_one({"_id": self.guild_id})
             if rec.get("hasChanges", False):
+                cfg = bot.db.guildConfigs.find_one({"_id": guild_id}) or defaultConfig.copy()
                 self.bot.db.guildConfigs.update_one(
                     {"_id": self.guild_id},
-                    {"$set": {"hasChanges": False}},
+                    {"$set": {**cfg, "hasChanges": False}},
                     upsert=True
                 )
                 return await interaction.response.edit_message(
@@ -107,13 +109,14 @@ class SettingsDropdown(discord.ui.Select):
             view.add_item(ToggleLogo(self.bot, self.guild_id))
             view.add_item(ToggleBanner(self.bot, self.guild_id))
 
-        else: 
+        else:
             view = discord.ui.View(timeout=300)
             for key, label in infoFields.items():
                 view.add_item(ToggleField(self.bot, self.guild_id, key, label))
             view.add_item(ToggleField(self.bot, self.guild_id, "showRoles", "Display Roles"))
             view.add_item(ResetButton(self.bot, self.guild_id))
             view.add_item(BackButton(self.bot, self.guild_id))
+
         settingsSelect = discord.Embed(
             title="Settings",
             description=(
@@ -121,6 +124,7 @@ class SettingsDropdown(discord.ui.Select):
             ),
             color=cfg.get("embedColor") if cfg.get("embedColor") else None
         )
+
         await interaction.response.edit_message(content=None, embed=settingsSelect, view=view)
 
 class SettingsView(discord.ui.View):
