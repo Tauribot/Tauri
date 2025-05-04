@@ -59,41 +59,46 @@ class SettingsDropdown(discord.ui.Select):
         cfg = self.bot.db.guildConfigs.find_one({"_id": self.guild_id}) or defaultConfig.copy()
 
         if choice == "skip":
+            new_config = defaultConfig.copy()
+            new_config.update({
+                "configured": True,
+                "hasChanges": False
+            })
             self.bot.db.guildConfigs.update_one(
                 {"_id": self.guild_id},
-                {"$set": {"configured": True, "hasChanges": False}},
+                {"$set": new_config},
                 upsert=True
             )
             return await interaction.response.edit_message(
-                content="You have skipped the configuration. Basic settings applied.",
+                content="Default configuration applied. You can now use /serverinfo.",
                 embed=None,
                 view=None
             )
 
         if choice == "finish":
-            rec = self.bot.db.guildConfigs.find_one({"_id": self.guild_id})
-            if rec.get("hasChanges", False):
+            current_config = self.bot.db.guildConfigs.find_one({"_id": self.guild_id}) or defaultConfig.copy()
+            
+            if current_config.get("hasChanges", False):
                 self.bot.db.guildConfigs.update_one(
                     {"_id": self.guild_id},
-                    {"$set": {"hasChanges": False}},
+                    {"$set": {"hasChanges": False, "configured": True}},
                     upsert=True
                 )
                 return await interaction.response.edit_message(
-                    content="Your changes have been saved successfully.",
+                    content="Your changes have been saved!",
                     embed=None,
                     view=None
                 )
             else:
-                basic = defaultConfig.copy()
-                basic["configured"] = True
-                basic["hasChanges"] = False
+                new_config = defaultConfig.copy()
+                new_config["configured"] = True
                 self.bot.db.guildConfigs.update_one(
                     {"_id": self.guild_id},
-                    {"$set": basic},
+                    {"$set": new_config},
                     upsert=True
                 )
                 return await interaction.response.edit_message(
-                    content="No changes were made. Basic configuration applied.",
+                    content="Default configuration applied since no changes were made.",
                     embed=None,
                     view=None
                 )
@@ -339,7 +344,7 @@ class ServerInfo(commands.Cog):
     async def serverinfo(self, ctx: commands.Context):
         cfg = self.bot.db.guildConfigs.find_one({"_id": ctx.guild.id}) or defaultConfig.copy()
 
-        if not cfg.get("configured") and ctx.author.guild_permissions.manage_guild:
+        if not cfg.get("configured", False) and ctx.author.guild_permissions.manage_guild:
             view = SettingsView(self.bot, ctx.guild.id, cfg)
             embed = discord.Embed(
                 title="Server Information Setup Required",
