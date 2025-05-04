@@ -74,11 +74,12 @@ class Utilities(commands.Cog):
         await ctx.channel.send(embed=embed, view=view)
         await ctx.send("Embed sent", ephemeral=True)
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        guild = discord.Object(id=tauriServerId)
-        self.bot.tree.copy_global_to(guild=guild)
-        await self.bot.tree.sync(guild=guild)
-
 async def setup(bot: commands.Bot):
     await bot.add_cog(Utilities(bot))
+
+    async def sync_guild_commands():
+        await bot.wait_until_ready()
+        guild = discord.Object(id=tauriServerId)
+        await bot.tree.sync(guild=guild)
+
+    bot.loop.create_task(sync_guild_commands())
